@@ -4,8 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Resources;
+using System.Threading.Tasks;
 
-namespace Microsoft.DotNet.Watcher.Tools.Tests
+namespace Microsoft.DotNet.Tools
 {
     public class TemporaryDirectory : IDisposable
     {
@@ -47,9 +50,13 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
             return project;
         }
 
-        public TemporaryDirectory WithFile(string name, string contents = "")
+        public TemporaryDirectory WithFile(string name)
         {
-            _files[name] = contents;
+            using (var stream = File.OpenRead(Path.Combine("TestContent", $"{name}.txt")))
+            using (var streamReader = new StreamReader(stream))
+            {
+                _files[name] = streamReader.ReadToEnd();
+            }
             return this;
         }
 

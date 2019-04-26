@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <OutputType>exe</OutputType>
@@ -15,6 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="All" />
     <Reference Include="Microsoft.Extensions.CommandLineUtils.Sources" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>Grpc</_Parameter1>
+      <_Parameter2>Grpc.AspNetCore.Server:$(GrpcAspNetCoreServerPackageVersion);Google.ProtoBuf:$(GoogleProtoBufPackageVersion);Grpc.Tools:$(GrpcToolsPackageVersion)</_Parameter2>
+    </AssemblyAttribute>
   </ItemGroup>
 </Project>

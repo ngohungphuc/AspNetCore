@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.DotNet.Watcher.Tools.Tests
+namespace Microsoft.DotNet.Tools
 {
     public class TestProjectGraph
     {

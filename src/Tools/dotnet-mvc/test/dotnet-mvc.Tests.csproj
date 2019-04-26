@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <AssemblyName>Microsoft.DotNet.Add.ServiceReference.Tools.Tests</AssemblyName>
+    <AssemblyName>Microsoft.DotNet.Mvc.Tools.Tests</AssemblyName>
     <DefaultItemExcludes>$(DefaultItemExcludes);TestProjects\**\*</DefaultItemExcludes>
     <TestGroupName>DotNetAddServiceReferenceToolsTests</TestGroupName>
   </PropertyGroup>
@@ -13,7 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\dotnet-add-servicereference.csproj" />
+    <ProjectReference Include="..\..\Tests.Common\Tests.Common.csproj" />
+    <ProjectReference Include="..\src\dotnet-mvc.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,8 +33,6 @@
   </Target>
 
   <Target Name="PublishDotNetWatch" BeforeTargets="Build">
-    <MSBuild Projects="..\src\dotnet-add-servicereference.csproj"
-      Targets="Publish"
-      Properties="PublishDir=$(OutputPath)\tool\;Configuration=$(Configuration)" />
+    <MSBuild Projects="..\src\dotnet-mvc.csproj" Targets="Publish" Properties="PublishDir=$(OutputPath)\tool\;Configuration=$(Configuration)" />
   </Target>
 </Project>
