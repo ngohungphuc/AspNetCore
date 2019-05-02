@@ -21,6 +21,17 @@ namespace Microsoft.DotNet.Tools
   </ItemGroup>
 </Project>";
 
+        private const string WebTemplate =
+@"<Project Sdk=""Microsoft.NET.Sdk.Web"">
+  <PropertyGroup>
+    {0}
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    {1}
+  </ItemGroup>
+</Project>";
+
         private readonly string _filename;
         private readonly TemporaryDirectory _directory;
         private List<string> _items = new List<string>();
@@ -93,9 +104,9 @@ namespace Microsoft.DotNet.Tools
 
         public TemporaryDirectory Dir() => _directory;
 
-        public void Create()
+        public void Create(bool web = false)
         {
-            _directory.CreateFile(_filename, string.Format(Template, string.Join("\r\n", _properties), string.Join("\r\n", _items)));
+            _directory.CreateFile(_filename, string.Format(web ? WebTemplate : Template, string.Join("\r\n", _properties), string.Join("\r\n", _items)));
         }
 
         public class ItemSpec

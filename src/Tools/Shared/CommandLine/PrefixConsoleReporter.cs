@@ -3,26 +3,27 @@
 
 using System;
 using System.IO;
-using Microsoft.Extensions.Tools.Internal;
 
-namespace Microsoft.DotNet.Watcher
+namespace Microsoft.Extensions.Tools.Internal
 {
     public class PrefixConsoleReporter : ConsoleReporter
     {
         private object _lock = new object();
 
-        public PrefixConsoleReporter(IConsole console, bool verbose, bool quiet)
+        private readonly string _prefix;
+
+        public PrefixConsoleReporter(string prefix, IConsole console, bool verbose, bool quiet)
             : base(console, verbose, quiet)
-        { }
+        {
+            _prefix = prefix;
+        }
 
         protected override void WriteLine(TextWriter writer, string message, ConsoleColor? color)
         {
-            const string prefix = "watch : ";
-
             lock (_lock)
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                writer.Write(prefix);
+                writer.Write(_prefix);
                 Console.ResetColor();
 
                 base.WriteLine(writer, message, color);

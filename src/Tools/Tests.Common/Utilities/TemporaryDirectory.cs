@@ -69,7 +69,7 @@ namespace Microsoft.DotNet.Tools
             return _parent;
         }
 
-        public void Create()
+        public void Create(bool web = false)
         {
             Directory.CreateDirectory(Root);
 
@@ -80,7 +80,7 @@ namespace Microsoft.DotNet.Tools
 
             foreach (var project in _projects)
             {
-                project.Create();
+                project.Create(web);
             }
 
             foreach (var file in _files)

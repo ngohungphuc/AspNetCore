@@ -205,7 +205,7 @@ namespace Microsoft.DotNet.Watcher
         }
 
         private static IReporter CreateReporter(bool verbose, bool quiet, IConsole console)
-            => new PrefixConsoleReporter(console, verbose || CliContext.IsGlobalVerbose(), quiet);
+            => new PrefixConsoleReporter("watch : ", console, verbose || CliContext.IsGlobalVerbose(), quiet);
 
         public void Dispose()
         {
