@@ -2,114 +2,68 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Build.Framework;
-using Microsoft.Extensions.CommandLineUtils;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
-using Utilities = Microsoft.Build.Utilities;
+using Microsoft.Extensions.Tools.Internal;
 
 namespace Microsoft.Extensions.OpenApi.Tasks
 {
     /// <summary>
     /// Downloads a file.
     /// </summary>
-    public class DownloadFile
+    public static class DownloadFileExtensions
     {
-        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-        /// <summary>
-        /// The URI to download.
-        /// </summary>
-        [Required]
-        public string Uri { get; set; }
-
-        /// <summary>
-        /// Destination for the downloaded file. If the file already exists, it is not re-downloaded unless
-        /// <see cref="Overwrite"/> is true.
-        /// </summary>
-        [Required]
-        public string DestinationPath { get; set; }
-
-        /// <summary>
-        /// Should <see cref="DestinationPath"/> be overwritten. When <c>true</c>, the file is downloaded and its hash
-        /// compared to the existing file. If those hashes do not match (or <see cref="DestinationPath"/> does not
-        /// exist), <see cref="DestinationPath"/> is overwritten.
-        /// </summary>
-        public bool Overwrite { get; set; }
-
-        /// <summary>
-        /// The maximum amount of time in seconds to allow for downloading the file. Defaults to 2 minutes.
-        /// </summary>
-        public int TimeoutSeconds { get; set; } = 60 * 2;
-
-        /// <inheritdoc/>
-        public void Cancel() => _cts.Cancel();
-
-        /// <inheritdoc/>
-        public override bool Execute() => ExecuteAsync().Result;
-
-        public async Task<bool> ExecuteAsync()
+        public static async Task DownloadFileAsync(this HttpClient client, string uri, string destination, IReporter reporter, bool overwrite = false, int timeoutSeconds = 60 * 2)
         {
-            if (string.IsNullOrEmpty(Uri))
+            if (string.IsNullOrEmpty(uri))
             {
-                Log.LogError("Uri parameter must not be null or empty.");
-                return false;
+                reporter.Error("Uri parameter must not be null or empty.");
+                throw new ArgumentException();
             }
 
-            if (string.IsNullOrEmpty(Uri))
+            if (string.IsNullOrEmpty(uri))
             {
-                Log.LogError("DestinationPath parameter must not be null or empty.");
-                return false;
+                reporter.Error("DestinationPath parameter must not be null or empty.");
+                throw new ArgumentException();
             }
 
-            var builder = new UriBuilder(Uri);
-            if (!string.Equals(System.Uri.UriSchemeHttp, builder.Scheme, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(System.Uri.UriSchemeHttps, builder.Scheme, StringComparison.OrdinalIgnoreCase))
+            var builder = new UriBuilder(uri);
+            if (!string.Equals(Uri.UriSchemeHttp, builder.Scheme, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(Uri.UriSchemeHttps, builder.Scheme, StringComparison.OrdinalIgnoreCase))
             {
-                Log.LogError($"{nameof(Uri)} parameter does not have scheme {System.Uri.UriSchemeHttp} or " +
-                    $"{System.Uri.UriSchemeHttps}.");
-                return false;
+                reporter.Error($"{nameof(Uri)} parameter does not have scheme {Uri.UriSchemeHttp} or " +
+                    $"{Uri.UriSchemeHttps}.");
+                throw new ArgumentException();
             }
 
-            await DownloadFileAsync(Uri, DestinationPath, Overwrite, _cts.Token, TimeoutSeconds, Log);
-
-            return !Log.HasLoggedErrors;
+            await DownloadAsync(client, uri, destination, overwrite, timeoutSeconds, reporter);
         }
 
-        private static async Task DownloadFileAsync(
+        private static async Task DownloadAsync(
+            HttpClient client,
             string uri,
             string destinationPath,
             bool overwrite,
-            CancellationToken cancellationToken,
             int timeoutSeconds,
-            TaskLoggingHelper log)
+            IReporter reporter)
         {
             var destinationExists = File.Exists(destinationPath);
             if (destinationExists && !overwrite)
             {
-                log.LogMessage($"Not downloading '{uri}' to overwrite existing file '{destinationPath}'.");
+                reporter.Output($"Not downloading '{uri}' to overwrite existing file '{destinationPath}'.");
                 return;
             }
 
-            log.LogMessage(MessageImportance.High, $"Downloading '{uri}' to '{destinationPath}'.");
+            reporter.Output($"Downloading '{uri}' to '{destinationPath}'.");
 
-            using (var httpClient = new HttpClient())
+            using (client)
             {
-                await DownloadAsync(uri, destinationPath, httpClient, cancellationToken, log, timeoutSeconds);
+                await DownloadAsync(uri, destinationPath, client, reporter, timeoutSeconds);
             }
         }
 
@@ -117,8 +71,7 @@ namespace Microsoft.Extensions.OpenApi.Tasks
             string uri,
             string destinationPath,
             HttpClient httpClient,
-            CancellationToken cancellationToken,
-            TaskLoggingHelper log,
+            IReporter reporter,
             int timeoutSeconds)
         {
             // Timeout if the response has not begun within 1 minute
@@ -128,10 +81,9 @@ namespace Microsoft.Extensions.OpenApi.Tasks
             var reachedCopy = false;
             try
             {
-                using (var response = await httpClient.GetAsync(uri, cancellationToken))
+                using (var response = await httpClient.GetAsync(uri))
                 {
                     response.EnsureSuccessStatusCode();
-                    cancellationToken.ThrowIfCancellationRequested();
 
                     using (var responseStreamTask = response.Content.ReadAsStreamAsync())
                     {
@@ -166,7 +118,7 @@ namespace Microsoft.Extensions.OpenApi.Tasks
 
                                 if (sameHashes)
                                 {
-                                    log.LogMessage($"Not overwriting existing and matching file '{destinationPath}'.");
+                                    reporter.Output($"Not overwriting existing and matching file '{destinationPath}'.");
                                     return;
                                 }
                             }
@@ -196,17 +148,17 @@ namespace Microsoft.Extensions.OpenApi.Tasks
             {
                 if (ex.InnerException is SocketException socketException)
                 {
-                    log.LogWarning($"Unable to download {uri}, socket error code '{socketException.SocketErrorCode}'.");
+                    reporter.Warn($"Unable to download {uri}, socket error code '{socketException.SocketErrorCode}'.");
                 }
                 else
                 {
-                    log.LogWarning($"Unable to download {uri}: {ex.Message}");
+                    reporter.Warn($"Unable to download {uri}: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                log.LogError($"Downloading '{uri}' failed.");
-                log.LogErrorFromException(ex, showStackTrace: true);
+                reporter.Error($"Downloading '{uri}' failed.");
+                reporter.Error(ex.ToString());
                 if (reachedCopy)
                 {
                     File.Delete(destinationPath);

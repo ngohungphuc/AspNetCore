@@ -10,8 +10,10 @@ using System.Threading;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Tools.Internal;
 using System.Diagnostics;
-using System.Xml.Linq;
 using System.Xml;
+using System.Net.Http;
+using Microsoft.Extensions.OpenApi.Tasks;
+using System.Threading.Tasks;
 
 namespace Microsoft.DotNet.OpenApi
 {
@@ -103,6 +105,7 @@ namespace Microsoft.DotNet.OpenApi
         private const string OpenApiReference = "OpenApiReference";
         private const string OpenApiProjectReference = "OpenApiProjectReference";
         private const string IncludeAttrName = "Include";
+        private const string DefaultSwaggerFile = "swagger.json";
 
         public int Run(string[] args)
         {
@@ -130,7 +133,7 @@ namespace Microsoft.DotNet.OpenApi
                     var noRestoreOpt = c.Option("-n|--no-restore", "Add the reference without performing restore preview and compatibility check.",
                         CommandOptionType.NoValue);
 
-                    c.OnExecute(() =>
+                    c.OnExecute(async () =>
                     {
                         var projectFile = ResolveProjectFile(optProjects);
 
@@ -147,9 +150,14 @@ namespace Microsoft.DotNet.OpenApi
                         }
                         else if (IsUrl(sourceFile))
                         {
+                            var destination = Path.Combine(_workingDir, DefaultSwaggerFile);
                             // We have to download the file from that url, save it to a local file, then create a AddServiceLocalReference
                             // Use this task https://github.com/aspnet/AspNetCore/commit/91dcbd44c10af893374cfb36dc7a009caa4818d0#diff-ea7515a116529b85ad5aa8e06e4acc8e
-                            throw new NotImplementedException();
+                            using (var client = new HttpClient())
+                            {
+                                await client.DownloadFileAsync(sourceFile, destination, _reporter, overwrite: false);
+                            }
+                            AddServiceReference(OpenApiReference, projectFile, destination, DefaultClassName, codeGenerator);
                         }
                         else
                         {
@@ -185,10 +193,8 @@ namespace Microsoft.DotNet.OpenApi
 
                 return app.Execute(args);
             }
-            catch (Exception ex)
+            catch
             {
-                _reporter.Error("Unexpected error:");
-                _reporter.Error(ex.ToString());
                 return Failure;
             }
         }
@@ -223,11 +229,6 @@ namespace Microsoft.DotNet.OpenApi
             return new FileInfo(csproj);
         }
 
-        private void AddDependencies(FileInfo projectFile)
-        {
-            throw new NotImplementedException();
-        }
-
         private void EnsurePackagesInProject(FileInfo projectFile, CodeGenerator codeGenerator)
         {
             var packages = GetServicePackages(codeGenerator);
@@ -249,6 +250,8 @@ namespace Microsoft.DotNet.OpenApi
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                 };
+
+                var tcs = new TaskCompletionSource<int>();
 
                 var process = Process.Start(startInfo);
                 process.WaitForExit(20 * 1000);
