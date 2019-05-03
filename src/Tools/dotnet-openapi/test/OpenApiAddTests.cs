@@ -22,7 +22,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         private readonly StringBuilder _error = new StringBuilder();
         private readonly ITestOutputHelper _outputHelper;
 
-        private const string SwaggerJsonUrl = "";
+        private const string SwaggerJsonUrl = "https://raw.githubusercontent.com/glennc/clientgen/master/ConsoleClient/Server.v1.json";
 
         public OpenApiAddTests(ITestOutputHelper output)
         {

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>Microsoft.DotNet.Open.Api.Tools.Tests</AssemblyName>
@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Tests.Common\Tests.Common.csproj" />
     <ProjectReference Include="..\src\dotnet-openapi.csproj" />
+    <Reference Include="Microsoft.Build.Utilities.Core" />
   </ItemGroup>
 
   <ItemGroup>
