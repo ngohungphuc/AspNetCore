@@ -116,71 +116,24 @@ namespace Microsoft.DotNet.OpenApi
                     Name = "dotnet openapi"
                 };
 
-                var optProjects = app.Option("-p|--project <PROJECT>", "The project to add a reference to",
-                    CommandOptionType.SingleValue);
+                var optProjects = app.Option("-p|--project", "The project to add a reference to", CommandOptionType.SingleValue);
 
                 var verbose = app.Option("-v|--verbose",
                     "Display more debug information.",
                     CommandOptionType.NoValue);
 
-                app.Command("add", c =>
-                {
-                    _reporter = CreateReporter(verbose.HasValue(), quiet: false);
-
-                    var sourceFileArg = c.Argument(SourceFileArgName, "The openapi file to add. This can be a path to a local openapi file, " +
-                        "a URI to a remote openapi file or a path to a *.csproj file containing openapi endpoints");
-
-                    var noRestoreOpt = c.Option("-n|--no-restore", "Add the reference without performing restore preview and compatibility check.",
-                        CommandOptionType.NoValue);
-
-                    c.OnExecute(async () =>
-                    {
-                        var projectFile = ResolveProjectFile(optProjects);
-
-                        var sourceFile = Ensure.NotNullOrEmpty(sourceFileArg.Value, SourceFileArgName);
-                        var codeGenerator = CodeGenerator.NSwagCSharp;
-                        EnsurePackagesInProject(projectFile, codeGenerator);
-                        if (IsProjectFile(sourceFile))
-                        {
-                            AddServiceReference(OpenApiProjectReference, projectFile, sourceFile, DefaultClassName, codeGenerator);
-                        }
-                        else if (IsLocalFile(sourceFile))
-                        {
-                            AddServiceReference(OpenApiReference, projectFile, sourceFile, DefaultClassName, codeGenerator);
-                        }
-                        else if (IsUrl(sourceFile))
-                        {
-                            var destination = Path.Combine(_workingDir, DefaultSwaggerFile);
-                            // We have to download the file from that url, save it to a local file, then create a AddServiceLocalReference
-                            // Use this task https://github.com/aspnet/AspNetCore/commit/91dcbd44c10af893374cfb36dc7a009caa4818d0#diff-ea7515a116529b85ad5aa8e06e4acc8e
-                            using (var client = new HttpClient())
-                            {
-                                await client.DownloadFileAsync(sourceFile, destination, _reporter, overwrite: false);
-                            }
-                            AddServiceReference(OpenApiReference, projectFile, destination, DefaultClassName, codeGenerator);
-                        }
-                        else
-                        {
-                            _reporter.Error($"{SourceFileArgName} of '{sourceFile}' was not valid. Valid values are: a JSON file, a Project File or a Url");
-                            throw new ArgumentException();
-                        }
-                    });
+                app.Command("add", c => {
+                    AddCommand(c, verbose, optProjects);
                 });
 
                 app.Command("remove", c =>
                 {
-                    c.OnExecute(() =>
-                    {
-                        return 1;
-                    });
+                    RemoveCommand(c, verbose, optProjects);
                 });
 
                 app.Command("refresh", c =>
                 {
-                    c.OnExecute(() =>
-                    {
-                        return 1;
-                    });
+                    RefreshCommand(c, verbose, optProjects);
                 });
 
                 app.HelpOption("-h|--help");
@@ -197,6 +150,102 @@ namespace Microsoft.DotNet.OpenApi
             {
                 return Failure;
             }
+        }
+
+        private void RefreshCommand(CommandLineApplication c, CommandOption verbose, CommandOption optProjects)
+        {
+            c.OnExecute(() =>
+            {
+                return 1;
+            });
+        }
+
+        private void RemoveCommand(CommandLineApplication c, CommandOption verbose, CommandOption optProjects)
+        {
+            _reporter = CreateReporter(verbose.HasValue(), quiet: false);
+
+            var sourceFileArg = SourceFileArgument(c, "remove");
+
+            c.OnExecute(() =>
+            {
+                var projectFile = ResolveProjectFile(optProjects);
+
+                var sourceFile = Ensure.NotNullOrEmpty(sourceFileArg.Value, SourceFileArgName);
+
+                if(IsProjectFile(sourceFile))
+                {
+                    RemoveServiceReference(OpenApiProjectReference, projectFile, sourceFile);
+                }
+                else
+                {
+                    RemoveServiceReference(OpenApiReference, projectFile, sourceFile);
+                }
+            });
+        }
+
+        private void AddCommand(CommandLineApplication c, CommandOption verbose, CommandOption optProjects)
+        {
+            _reporter = CreateReporter(verbose.HasValue(), quiet: false);
+
+            var sourceFileArg = SourceFileArgument(c, "add");
+
+            c.OnExecute(async () =>
+            {
+                var projectFile = ResolveProjectFile(optProjects);
+
+                var sourceFile = Ensure.NotNullOrEmpty(sourceFileArg.Value, SourceFileArgName);
+                var codeGenerator = CodeGenerator.NSwagCSharp;
+                EnsurePackagesInProject(projectFile, codeGenerator);
+                if (IsProjectFile(sourceFile))
+                {
+                    AddServiceReference(OpenApiProjectReference, projectFile, sourceFile, DefaultClassName, codeGenerator);
+                }
+                else if (IsLocalFile(sourceFile))
+                {
+                    AddServiceReference(OpenApiReference, projectFile, sourceFile, DefaultClassName, codeGenerator);
+                }
+                else if (IsUrl(sourceFile))
+                {
+                    var destination = Path.Combine(_workingDir, DefaultSwaggerFile);
+                    // We have to download the file from that url, save it to a local file, then create a AddServiceLocalReference
+                    // Use this task https://github.com/aspnet/AspNetCore/commit/91dcbd44c10af893374cfb36dc7a009caa4818d0#diff-ea7515a116529b85ad5aa8e06e4acc8e
+                    using (var client = new HttpClient())
+                    {
+                        await client.DownloadFileAsync(sourceFile, destination, _reporter, overwrite: false);
+                    }
+                    AddServiceReference(OpenApiReference, projectFile, destination, DefaultClassName, codeGenerator);
+                }
+                else
+                {
+                    _reporter.Error($"{SourceFileArgName} of '{sourceFile}' was not valid. Valid values are: a JSON file, a Project File or a Url");
+                    throw new ArgumentException();
+                }
+            });
+        }
+
+        private void RemoveServiceReference(string tagName, FileInfo projectFile, string sourceFile)
+        {
+            var projXml = LoadProject(projectFile, out var projNode);
+            var openApiReferenceNodes = projNode.GetElementsByTagName(tagName);
+
+            foreach(XmlElement refNode in openApiReferenceNodes)
+            {
+                var includeAttr = refNode.GetAttribute(IncludeAttrName);
+                if(string.Equals(includeAttr, sourceFile, StringComparison.Ordinal))
+                {
+                    refNode.ParentNode.RemoveChild(refNode);
+                    projXml.Save(projectFile.FullName);
+                    return;
+                }
+            }
+
+            _reporter.Warn("No openapi reference was found with the given source file");
+        }
+
+        private CommandArgument SourceFileArgument(CommandLineApplication c, string action)
+        {
+            return c.Argument(SourceFileArgName, $"The openapi file to {action}. This can be a path to a local openapi file, " +
+                "a URI to a remote openapi file or a path to a *.csproj file containing openapi endpoints");
         }
 
         private FileInfo ResolveProjectFile(CommandOption optProjects)
@@ -265,12 +314,7 @@ namespace Microsoft.DotNet.OpenApi
             }
         }
 
-        private void AddServiceReference(
-            string tagName,
-            FileInfo projectFile,
-            string sourceFile,
-            string className,
-            CodeGenerator codeGenerator)
+        private XmlDocument LoadProject(FileInfo projectFile, out XmlElement projNode)
         {
             var projXml = new XmlDocument();
             projXml.Load(projectFile.FullName);
@@ -281,7 +325,19 @@ namespace Microsoft.DotNet.OpenApi
                 _reporter.Error("There must be exactly one Project element in your csproj file");
                 throw new ArgumentException();
             }
-            var projNode = (XmlElement)projNodes[0];
+            projNode = (XmlElement)projNodes[0];
+
+            return projXml;
+        }
+
+        private void AddServiceReference(
+            string tagName,
+            FileInfo projectFile,
+            string sourceFile,
+            string className,
+            CodeGenerator codeGenerator)
+        {
+            var projXml = LoadProject(projectFile, out var projNode);
             EnsureServiceReference(tagName, projNode, sourceFile);
 
             projXml.Save(projectFile.FullName);
@@ -289,7 +345,7 @@ namespace Microsoft.DotNet.OpenApi
 
         private void EnsureServiceReference(string tagName, XmlElement projNode, string sourceFile)
         {
-            var openApiReferenceNodes = projNode.GetElementsByTagName(OpenApiReference);
+            var openApiReferenceNodes = projNode.GetElementsByTagName(tagName);
 
             foreach(XmlElement refNode in openApiReferenceNodes)
             {

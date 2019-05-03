@@ -4,9 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Resources;
-using System.Threading.Tasks;
 
 namespace Microsoft.DotNet.Tools
 {
@@ -50,7 +47,13 @@ namespace Microsoft.DotNet.Tools
             return project;
         }
 
-        public TemporaryDirectory WithFile(string name)
+        public TemporaryDirectory WithEmptyFile(string name)
+        {
+            _files[name] = string.Empty;
+            return this;
+        }
+
+        public TemporaryDirectory WithContentFile(string name)
         {
             using (var stream = File.OpenRead(Path.Combine("TestContent", $"{name}.txt")))
             using (var streamReader = new StreamReader(stream))

@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.DotNet.Tools;
 using Microsoft.Extensions.Tools.Internal;
 using Xunit;
@@ -31,9 +32,49 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
         }
 
         [Fact]
-        public void OpenApi_Remove_File()
+        public async Task OpenApi_Remove_File()
         {
-            throw new NotImplementedException();
+            var nswagJsonFIle = "swagger.json";
+            _tempDir
+                .WithCSharpProject("testproj")
+                .WithTargetFrameworks("netcoreapp3.0")
+                .Dir()
+                .WithContentFile(nswagJsonFIle)
+                .WithContentFile("Startup.cs")
+                .Create(true);
+
+            var add = new Program(_console, _tempDir.Root);
+            var run = add.Run(new[] { "add", nswagJsonFIle });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            // csproj contents
+            var csproj = new FileInfo(Path.Join(_tempDir.Root, "testproj.csproj"));
+            using (var csprojStream = csproj.OpenRead())
+            using (var reader = new StreamReader(csprojStream))
+            {
+                var content = await reader.ReadToEndAsync();
+                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
+            }
+
+            var remove = new Program(_console, _tempDir.Root);
+            var removeRun = remove.Run(new[] { "remove", nswagJsonFIle });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, removeRun);
+
+            // csproj contents
+            csproj = new FileInfo(Path.Join(_tempDir.Root, "testproj.csproj"));
+            using (var csprojStream = csproj.OpenRead())
+            using (var reader = new StreamReader(csprojStream))
+            {
+                var content = await reader.ReadToEndAsync();
+                // Don't remove the package reference, they might have taken other dependencies on it
+                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.DoesNotContain($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
+            }
         }
 
         [Fact]

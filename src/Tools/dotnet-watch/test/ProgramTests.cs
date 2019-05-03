@@ -31,7 +31,7 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                 .WithCSharpProject("testproj")
                 .WithTargetFrameworks("netcoreapp3.0")
                 .Dir()
-                .WithFile("Program.cs")
+                .WithEmptyFile("Program.cs")
                 .Create();
 
             var output = new StringBuilder();

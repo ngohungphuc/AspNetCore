@@ -9,6 +9,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="TestProjects\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
 

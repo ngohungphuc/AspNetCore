@@ -35,9 +35,9 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                     .WithTargetFrameworks("netcoreapp1.0")
                     .WithItem(new ItemSpec { Name = "Watch", Include = "*.js", Exclude = "gulpfile.js" })
                     .Dir()
-                    .WithFile("Program.cs")
-                    .WithFile("app.js")
-                    .WithFile("gulpfile.js");
+                    .WithEmptyFile("Program.cs")
+                    .WithEmptyFile("app.js")
+                    .WithEmptyFile("gulpfile.js");
 
             var fileset = await GetFileSet(target);
 
@@ -61,8 +61,8 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                     .WithTargetFrameworks("net40")
                     .WithItem(new ItemSpec { Name = "EmbeddedResource", Update = "*.resx", Watch = false })
                     .Dir()
-                    .WithFile("Program.cs")
-                    .WithFile("Strings.resx");
+                    .WithEmptyFile("Program.cs")
+                    .WithEmptyFile("Strings.resx");
 
             var fileset = await GetFileSet(target);
 
@@ -87,10 +87,10 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                         .WithProperty("BaseIntermediateOutputPath", "obj")
                         .WithTargetFrameworks("netcoreapp1.0")
                         .Dir()
-                        .WithFile("Program.cs")
-                        .WithFile("Class1.cs")
-                        .SubDir("obj").WithFile("ignored.cs").Up()
-                        .SubDir("Properties").WithFile("Strings.resx").Up()
+                        .WithEmptyFile("Program.cs")
+                        .WithEmptyFile("Class1.cs")
+                        .SubDir("obj").WithEmptyFile("ignored.cs").Up()
+                        .SubDir("Properties").WithEmptyFile("Strings.resx").Up()
                     .Up()
                 .Up()
                 .Create();
@@ -122,9 +122,9 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                        .WithItem("Compile", "Class1.netcore.cs", "'$(TargetFramework)'=='netcoreapp1.0'")
                        .WithItem("Compile", "Class1.desktop.cs", "'$(TargetFramework)'=='net451'")
                        .Dir()
-                       .WithFile("Class1.netcore.cs")
-                       .WithFile("Class1.desktop.cs")
-                       .WithFile("Class1.notincluded.cs");
+                       .WithEmptyFile("Class1.netcore.cs")
+                       .WithEmptyFile("Class1.desktop.cs")
+                       .WithEmptyFile("Class1.notincluded.cs");
 
             var fileset = await GetFileSet(target);
 
@@ -149,14 +149,14 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                         .WithCSharpProject("Project2", out var proj2)
                         .WithTargetFrameworks("netstandard1.1")
                         .Dir()
-                        .WithFile("Class2.cs")
+                        .WithEmptyFile("Class2.cs")
                     .Up()
                     .SubDir("Project1")
                         .WithCSharpProject("Project1", out var target)
                         .WithTargetFrameworks("netcoreapp1.0", "net451")
                         .WithProjectReference(proj2)
                         .Dir()
-                        .WithFile("Class1.cs");
+                        .WithEmptyFile("Class1.cs");
 
             var fileset = await GetFileSet(target);
 
@@ -182,21 +182,21 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                         .WithCSharpProject("Project3", out var proj3)
                         .WithTargetFrameworks("netstandard1.0")
                         .Dir()
-                        .WithFile("Class3.cs")
+                        .WithEmptyFile("Class3.cs")
                     .Up()
                     .SubDir("Project2")
                         .WithCSharpProject("Project2", out TemporaryCSharpProject proj2)
                         .WithTargetFrameworks("netstandard1.1")
                         .WithProjectReference(proj3)
                         .Dir()
-                        .WithFile("Class2.cs")
+                        .WithEmptyFile("Class2.cs")
                     .Up()
                     .SubDir("Project1")
                         .WithCSharpProject("Project1", out TemporaryCSharpProject target)
                         .WithTargetFrameworks("netcoreapp1.0", "net451")
                         .WithProjectReference(proj2)
                         .Dir()
-                        .WithFile("Class1.cs");
+                        .WithEmptyFile("Class1.cs");
 
             var fileset = await GetFileSet(target);
 

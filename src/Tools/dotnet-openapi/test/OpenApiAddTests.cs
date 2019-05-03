@@ -38,6 +38,18 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         }
 
         [Fact]
+        public void OpenApi_Add_ReuseItemGroup()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void OpenApi_Add_ProvideClassAndJsonName()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
         public async Task OpenApi_Add_FromJson()
         {
             var nswagJsonFIle = "swagger.json";
@@ -45,8 +57,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 .WithCSharpProject("testproj")
                 .WithTargetFrameworks("netcoreapp3.0")
                 .Dir()
-                .WithFile(nswagJsonFIle)
-                .WithFile("Startup.cs")
+                .WithContentFile(nswagJsonFIle)
+                .WithContentFile("Startup.cs")
                 .Create(true);
 
             var app = new Program(_console, _tempDir.Root);
@@ -79,9 +91,32 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         }
 
         [Fact]
-        public void OpenApi_UseProjectOption()
+        public async Task OpenApi_UseProjectOption()
         {
-            throw new NotImplementedException();
+            var nswagJsonFIle = "swagger.json";
+            _tempDir
+                .WithCSharpProject("testproj")
+                .WithTargetFrameworks("netcoreapp3.0")
+                .Dir()
+                .WithContentFile(nswagJsonFIle)
+                .WithContentFile("Startup.cs")
+                .Create(true);
+
+            var app = new Program(_console, _tempDir.Root);
+            var run = app.Run(new[] { "--project", "testproj.csproj", "add", nswagJsonFIle });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            // csproj contents
+            var csproj = new FileInfo(Path.Join(_tempDir.Root, "testproj.csproj"));
+            using (var csprojStream = csproj.OpenRead())
+            using (var reader = new StreamReader(csprojStream))
+            {
+                var content = await reader.ReadToEndAsync();
+                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
+            }
         }
 
         [Fact]
@@ -91,7 +126,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                .WithCSharpProject("testproj")
                .WithTargetFrameworks("netcoreapp3.0")
                .Dir()
-               .WithFile("Startup.cs")
+               .WithContentFile("Startup.cs")
                .Create(true);
 
             using (var refProj = new TemporaryDirectory())
@@ -128,7 +163,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
               .WithCSharpProject("testproj")
               .WithTargetFrameworks("netcoreapp3.0")
               .Dir()
-              .WithFile("Startup.cs")
+              .WithContentFile("Startup.cs")
               .Create(true);
 
             var app = new Program(_console, _tempDir.Root);
@@ -164,8 +199,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 .WithCSharpProject("testproj")
                 .WithTargetFrameworks("netcoreapp3.0")
                 .Dir()
-                .WithFile(nswagJsonFIle)
-                .WithFile("Startup.cs")
+                .WithContentFile(nswagJsonFIle)
+                .WithContentFile("Startup.cs")
                 .Create(true);
 
             var app = new Program(_console, _tempDir.Root);
