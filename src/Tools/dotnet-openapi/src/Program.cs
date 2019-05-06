@@ -55,6 +55,7 @@ namespace Microsoft.DotNet.OpenApi
         private const string OpenApiProjectReference = "OpenApiProjectReference";
         private const string IncludeAttrName = "Include";
         private const string DefaultSwaggerFile = "swagger.v1.json";
+        private const string SourceUrlAttrName = "SourceUrl";
 
         public int Run(string[] args)
         {
@@ -103,9 +104,28 @@ namespace Microsoft.DotNet.OpenApi
 
         private void RefreshCommand(CommandLineApplication c, CommandOption verbose, CommandOption optProjects)
         {
-            c.OnExecute(() =>
+            _reporter = CreateReporter(verbose.HasValue(), quiet: false);
+
+            var sourceFileArg = SourceFileArgument(c, "refresh");
+            c.OnExecute(async () =>
             {
-                return 1;
+                var projectFile = ResolveProjectFile(optProjects);
+
+                var sourceFile = Ensure.NotNullOrEmpty(sourceFileArg.Value, SourceFileArgName);
+
+                if (IsUrl(sourceFile))
+                {
+                    var destination = FindReferenceFromUrl(projectFile, sourceFile);
+                    using (var client = new HttpClient())
+                    {
+                        await client.DownloadFileAsync(sourceFile, destination, _reporter, overwrite: true);
+                    }
+                }
+                else
+                {
+                    _reporter.Error($"'dotnet openapi refresh' must be given a url");
+                    throw new ArgumentException();
+                }
             });
         }
 
@@ -128,6 +148,12 @@ namespace Microsoft.DotNet.OpenApi
                 else
                 {
                     RemoveServiceReference(OpenApiReference, projectFile, sourceFile);
+
+                    if(!Path.IsPathRooted(sourceFile))
+                    {
+                        sourceFile = Path.Combine(_workingDir, sourceFile);
+                    }
+                    File.Delete(sourceFile);
                 }
             });
         }
@@ -167,7 +193,7 @@ namespace Microsoft.DotNet.OpenApi
                     {
                         await client.DownloadFileAsync(sourceFile, destination, _reporter, overwrite: false);
                     }
-                    AddServiceReference(OpenApiReference, projectFile, destination, className, codeGenerator);
+                    AddServiceReference(OpenApiReference, projectFile, destination, className, codeGenerator, sourceFile);
                 }
                 else
                 {
@@ -175,6 +201,24 @@ namespace Microsoft.DotNet.OpenApi
                     throw new ArgumentException();
                 }
             });
+        }
+
+        private string FindReferenceFromUrl(FileInfo projectFile, string url)
+        {
+            LoadProject(projectFile, out var projNode);
+            var openApiReferenceNodes = projNode.GetElementsByTagName(OpenApiReference);
+
+            foreach (XmlElement node in openApiReferenceNodes)
+            {
+                var attrUrl = node.GetAttribute(SourceUrlAttrName);
+                if (string.Equals(attrUrl, url, StringComparison.Ordinal))
+                {
+                    return node.GetAttribute(IncludeAttrName);
+                }
+            }
+
+            _reporter.Error("There was no openapi reference to refresh with the given url.");
+            throw new ArgumentException();
         }
 
         private void RemoveServiceReference(string tagName, FileInfo projectFile, string sourceFile)
@@ -289,22 +333,28 @@ namespace Microsoft.DotNet.OpenApi
             FileInfo projectFile,
             string sourceFile,
             string className,
-            CodeGenerator codeGenerator)
+            CodeGenerator codeGenerator,
+            string sourceUrl = null)
         {
             var projXml = LoadProject(projectFile, out var projNode);
-            EnsureServiceReference(tagName, projNode, sourceFile, className);
+            EnsureServiceReference(tagName, projNode, sourceFile, className, sourceUrl);
 
             projXml.Save(projectFile.FullName);
         }
 
-        private void EnsureServiceReference(string tagName, XmlElement projNode, string sourceFile, string className)
+        private void EnsureServiceReference(
+            string tagName,
+            XmlElement projNode,
+            string sourceFile,
+            string className,
+            string sourceUrl)
         {
             var openApiReferenceNodes = projNode.GetElementsByTagName(tagName);
 
             XmlElement itemGroup;
             if(openApiReferenceNodes.Count > 0)
             {
-                itemGroup = (XmlElement)openApiReferenceNodes[0];
+                itemGroup = (XmlElement)openApiReferenceNodes[0].ParentNode;
                 foreach (XmlElement refNode in openApiReferenceNodes)
                 {
                     var includeAttr = refNode.GetAttribute(IncludeAttrName);
@@ -325,6 +375,10 @@ namespace Microsoft.DotNet.OpenApi
 
             reference.SetAttribute(IncludeAttrName, sourceFile);
             reference.SetAttribute("ClassName", className);
+            if(!string.IsNullOrEmpty(sourceUrl))
+            {
+                reference.SetAttribute(SourceUrlAttrName, sourceUrl);
+            }
             itemGroup.AppendChild(reference);
         }
 

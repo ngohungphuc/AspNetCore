@@ -1,40 +1,45 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.DotNet.Tools;
-using Microsoft.Extensions.Tools.Internal;
+using Microsoft.DotNet.OpenApi.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Microsoft.DotNet.OpenApi.Refresh.Tests
 {
-    public class OpenApiRefreshTests
+    public class OpenApiRefreshTests : OpenApiTestBase
     {
-        private readonly TemporaryDirectory _tempDir;
-        private readonly TestConsole _console;
-        private readonly StringBuilder _output = new StringBuilder();
-        private readonly StringBuilder _error = new StringBuilder();
-        private readonly ITestOutputHelper _outputHelper;
-
-        public OpenApiRefreshTests(ITestOutputHelper output)
-        {
-            _tempDir = new TemporaryDirectory();
-            _outputHelper = output;
-            _console = new TestConsole(output)
-            {
-                Error = new StringWriter(_error),
-                Out = new StringWriter(_output),
-            };
-        }
+        public OpenApiRefreshTests(ITestOutputHelper output) : base(output){}
 
         [Fact]
-        public void OpenApi_Refresh_Basic()
+        public async Task OpenApi_Refresh_Basic()
         {
-            throw new NotImplementedException();
+            CreateBasicProject(withSwagger: false);
+
+            var app = new Program(_console, _tempDir.Root);
+            var run = app.Run(new[] { "add", SwaggerJsonUrl });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            var expectedJsonPath = Path.Combine(_tempDir.Root, "swagger.v1.json");
+            var json = await File.ReadAllTextAsync(expectedJsonPath);
+            json += "trash";
+            await File.WriteAllTextAsync(expectedJsonPath, json);
+
+            var jsonInfo = new FileInfo(expectedJsonPath);
+            var firstWriteTime = jsonInfo.LastWriteTime;
+
+            app = new Program(_console, _tempDir.Root);
+            run = app.Run(new[] { "refresh", SwaggerJsonUrl });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            var secondWriteTime = new FileInfo(expectedJsonPath).LastWriteTime;
+            Assert.True(firstWriteTime < secondWriteTime, $"File wasn't updated! ${firstWriteTime} ${secondWriteTime}");
         }
     }
 }
