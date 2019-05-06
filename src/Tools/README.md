@@ -9,6 +9,7 @@ The folder contains command-line tools for ASP.NET Core that are bundled* in the
  - [dotnet-user-secrets](dotnet-user-secrets/README.md)
  - [dotnet-sql-cache](dotnet-sql-cache/README.md)
  - [dotnet-dev-certs](dotnet-dev-certs/README.md)
+ - [dotnet-openapi](dotnet-openapi/README.md)
 
 *\*This applies to .NET Core CLI 2.1.300-preview2 and up. For earlier versions of the CLI, these tools must be installed separately.*
 
@@ -23,6 +24,7 @@ dotnet watch
 dotnet user-secrets
 dotnet sql-cache
 dotnet dev-certs
+dotnet openapi
 ```
 
 Add `--help` to see more details. For example,
