@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using Microsoft.DotNet.Tools;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Tools.Internal;
@@ -38,15 +39,80 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         }
 
         [Fact]
-        public void OpenApi_Add_ReuseItemGroup()
+        public async Task OpenApi_Add_ReuseItemGroup()
         {
-            throw new NotImplementedException();
+            var nswagJsonFIle = "swagger.json";
+            _tempDir
+                .WithCSharpProject("testproj")
+                .WithTargetFrameworks("netcoreapp3.0")
+                .Dir()
+                .WithContentFile(nswagJsonFIle)
+                .WithContentFile("Startup.cs")
+                .Create(true);
+
+            var app = new Program(_console, _tempDir.Root);
+            var run = app.Run(new[] { "add", nswagJsonFIle });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            var secondRun = app.Run(new[] { "add", SwaggerJsonUrl});
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, secondRun);
+
+            var csproj = new FileInfo(Path.Join(_tempDir.Root, "testproj.csproj"));
+            string content;
+            using (var csprojStream = csproj.OpenRead())
+            using (var reader = new StreamReader(csprojStream))
+            {
+                content = await reader.ReadToEndAsync();
+                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
+            }
+            var projXml = new XmlDocument();
+            projXml.Load(csproj.FullName);
+
+            var openApiRefs = projXml.GetElementsByTagName(Program.OpenApiReference);
+            Assert.Same(openApiRefs[0].ParentNode, openApiRefs[1].ParentNode);
         }
 
         [Fact]
-        public void OpenApi_Add_ProvideClassAndJsonName()
+        public async Task OpenApi_Add_ProvideClassAndJsonName()
         {
-            throw new NotImplementedException();
+            var expectedJsonName = "different.json";
+            var className = "WhatAClass";
+
+            _tempDir
+                .WithCSharpProject("testproj")
+                .WithTargetFrameworks("netcoreapp3.0")
+                .Dir()
+                .WithContentFile("Startup.cs")
+                .Create(true);
+
+            var app = new Program(_console, _tempDir.Root);
+            var run = app.Run(new[] { "add", SwaggerJsonUrl, "--class-name", className, "--output-file", expectedJsonName});
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            var expectedJsonPath = Path.Combine(_tempDir.Root, expectedJsonName);
+
+            // csproj contents
+            using (var csprojStream = new FileInfo(Path.Join(_tempDir.Root, "testproj.csproj")).OpenRead())
+            using (var reader = new StreamReader(csprojStream))
+            {
+                var content = await reader.ReadToEndAsync();
+                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains($"<OpenApiReference Include=\"{expectedJsonPath}\" ClassName=\"{className}\"", content);
+            }
+
+            Assert.True(File.Exists(expectedJsonPath));
+            using (var jsonStream = new FileInfo(expectedJsonPath).OpenRead())
+            using (var reader = new StreamReader(jsonStream))
+            {
+                var content = await reader.ReadToEndAsync();
+                Assert.Contains("\"openapi\":", content);
+            }
         }
 
         [Fact]
@@ -182,6 +248,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
                 Assert.Contains($"<OpenApiReference Include=\"{expectedJsonName}\"", content);
             }
+
             Assert.True(File.Exists(expectedJsonName));
             using (var jsonStream = new FileInfo(expectedJsonName).OpenRead())
             using (var reader = new StreamReader(jsonStream))

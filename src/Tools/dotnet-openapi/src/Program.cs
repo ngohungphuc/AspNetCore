@@ -17,57 +17,6 @@ using System.Threading.Tasks;
 
 namespace Microsoft.DotNet.OpenApi
 {
-    internal class CommandLineOptions
-    {
-        public string Project { get; private set; }
-        public bool IsHelp { get; private set; }
-        public bool IsVerbose { get; private set; }
-        public IList<string> RemainingArguments { get; private set; }
-
-        public static CommandLineOptions Parse(string[] args, IConsole console)
-        {
-            Ensure.NotNull(args, nameof(args));
-            Ensure.NotNull(console, nameof(console));
-
-            var app = new CommandLineApplication(throwOnUnexpectedArg: false)
-            {
-                Name = "dotnet openapi",
-                FullName = "Microsoft DotNet Open API",
-                Out = console.Out,
-                Error = console.Error,
-                AllowArgumentSeparator = true,
-                ExtendedHelpText = @""
-            };
-
-            app.HelpOption("-?|-h|--help");
-            var optProjects = app.Option("-p|--project <PROJECT>", "The project to add the reference to",
-                CommandOptionType.SingleValue);
-
-            var optVerbose = app.VerboseOption();
-
-            app.VersionOptionFromAssemblyAttributes(typeof(Program).GetTypeInfo().Assembly);
-
-            if (app.Execute(args) != 0)
-            {
-                return null;
-            }
-
-            if (app.RemainingArguments.Count == 0
-                && !app.IsShowingInformation)
-            {
-                app.ShowHelp();
-            }
-
-            return new CommandLineOptions
-            {
-                Project = optProjects.Value(),
-                IsVerbose = optVerbose.HasValue(),
-                RemainingArguments = app.RemainingArguments,
-                IsHelp = app.IsShowingInformation,
-            };
-        }
-    }
-
     public enum CodeGenerator
     {
         NSwagCSharp
@@ -102,10 +51,10 @@ namespace Microsoft.DotNet.OpenApi
 
         private const string SourceFileArgName = "source-file";
         private const string DefaultClassName = "MyClient";
-        private const string OpenApiReference = "OpenApiReference";
+        public const string OpenApiReference = "OpenApiReference";
         private const string OpenApiProjectReference = "OpenApiProjectReference";
         private const string IncludeAttrName = "Include";
-        private const string DefaultSwaggerFile = "swagger.json";
+        private const string DefaultSwaggerFile = "swagger.v1.json";
 
         public int Run(string[] args)
         {
@@ -188,9 +137,14 @@ namespace Microsoft.DotNet.OpenApi
             _reporter = CreateReporter(verbose.HasValue(), quiet: false);
 
             var sourceFileArg = SourceFileArgument(c, "add");
+            var classNameOpt = c.Option("-c|--class-name", "The name of the class to be generated", CommandOptionType.SingleValue);
+            var outputFileOpt = c.Option("-o|--output-file", "The name of the file to output the swagger file to", CommandOptionType.SingleValue);
 
             c.OnExecute(async () =>
             {
+                var className = classNameOpt.HasValue() ? classNameOpt.Value() : DefaultClassName;
+                var outputFile = outputFileOpt.HasValue() ? outputFileOpt.Value() : DefaultSwaggerFile;
+
                 var projectFile = ResolveProjectFile(optProjects);
 
                 var sourceFile = Ensure.NotNullOrEmpty(sourceFileArg.Value, SourceFileArgName);
@@ -198,22 +152,22 @@ namespace Microsoft.DotNet.OpenApi
                 EnsurePackagesInProject(projectFile, codeGenerator);
                 if (IsProjectFile(sourceFile))
                 {
-                    AddServiceReference(OpenApiProjectReference, projectFile, sourceFile, DefaultClassName, codeGenerator);
+                    AddServiceReference(OpenApiProjectReference, projectFile, sourceFile, className, codeGenerator);
                 }
                 else if (IsLocalFile(sourceFile))
                 {
-                    AddServiceReference(OpenApiReference, projectFile, sourceFile, DefaultClassName, codeGenerator);
+                    AddServiceReference(OpenApiReference, projectFile, sourceFile, className, codeGenerator);
                 }
                 else if (IsUrl(sourceFile))
                 {
-                    var destination = Path.Combine(_workingDir, DefaultSwaggerFile);
+                    var destination = Path.Combine(_workingDir, outputFile);
                     // We have to download the file from that url, save it to a local file, then create a AddServiceLocalReference
                     // Use this task https://github.com/aspnet/AspNetCore/commit/91dcbd44c10af893374cfb36dc7a009caa4818d0#diff-ea7515a116529b85ad5aa8e06e4acc8e
                     using (var client = new HttpClient())
                     {
                         await client.DownloadFileAsync(sourceFile, destination, _reporter, overwrite: false);
                     }
-                    AddServiceReference(OpenApiReference, projectFile, destination, DefaultClassName, codeGenerator);
+                    AddServiceReference(OpenApiReference, projectFile, destination, className, codeGenerator);
                 }
                 else
                 {
@@ -338,32 +292,39 @@ namespace Microsoft.DotNet.OpenApi
             CodeGenerator codeGenerator)
         {
             var projXml = LoadProject(projectFile, out var projNode);
-            EnsureServiceReference(tagName, projNode, sourceFile);
+            EnsureServiceReference(tagName, projNode, sourceFile, className);
 
             projXml.Save(projectFile.FullName);
         }
 
-        private void EnsureServiceReference(string tagName, XmlElement projNode, string sourceFile)
+        private void EnsureServiceReference(string tagName, XmlElement projNode, string sourceFile, string className)
         {
             var openApiReferenceNodes = projNode.GetElementsByTagName(tagName);
 
-            foreach(XmlElement refNode in openApiReferenceNodes)
+            XmlElement itemGroup;
+            if(openApiReferenceNodes.Count > 0)
             {
-                var includeAttr = refNode.GetAttribute(IncludeAttrName);
-                if(string.Equals(includeAttr, sourceFile, StringComparison.Ordinal))
+                itemGroup = (XmlElement)openApiReferenceNodes[0];
+                foreach (XmlElement refNode in openApiReferenceNodes)
                 {
-                    // The reference already exists, nothing more to do here.
-                    return;
+                    var includeAttr = refNode.GetAttribute(IncludeAttrName);
+                    if (string.Equals(includeAttr, sourceFile, StringComparison.Ordinal))
+                    {
+                        // The reference already exists, nothing more to do here.
+                        return;
+                    }
                 }
             }
+            else
+            {
+                itemGroup = projNode.OwnerDocument.CreateElement("ItemGroup");
+            }
 
-            // TODO: find any existing itemGroups
-            var itemGroup = projNode.OwnerDocument.CreateElement("ItemGroup");
             projNode.AppendChild(itemGroup);
             var reference = projNode.OwnerDocument.CreateElement(tagName);
 
             reference.SetAttribute(IncludeAttrName, sourceFile);
-            reference.SetAttribute("ClassName", DefaultClassName);
+            reference.SetAttribute("ClassName", className);
             itemGroup.AppendChild(reference);
         }
 
