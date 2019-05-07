@@ -10,11 +10,11 @@
   <ItemGroup>
     <Compile Include="$(ToolSharedSourceRoot)TestHelpers\**\*.cs" />
     <Compile Include="$(SharedSourceRoot)test\SkipOnHelixAttribute.cs" />
+    <Content Include="TestProjects\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\dotnet-watch.csproj" />
-    <ProjectReference Include="..\..\Tests.Common\Tests.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -16,7 +16,7 @@ namespace Microsoft.DotNet.Tools
 
         public TemporaryDirectory()
         {
-            Root = Path.Combine(Path.GetTempPath(), "dotnet-watch-tests", Guid.NewGuid().ToString("N"));
+            Root = Path.Combine(Path.GetTempPath(), "dotnet-tool-tests", Guid.NewGuid().ToString("N"));
         }
 
         private TemporaryDirectory(string path, TemporaryDirectory parent)

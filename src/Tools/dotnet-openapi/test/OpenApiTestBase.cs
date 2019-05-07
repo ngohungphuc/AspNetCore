@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.OpenApi.Tests
         protected readonly ITestOutputHelper _outputHelper;
 
         // TODO: Use a more permanent URL
-        protected const string SwaggerJsonUrl = "https://raw.githubusercontent.com/glennc/clientgen/master/ConsoleClient/Server.v1.json";
+        protected const string SwaggerJsonUrl = "https://raw.githubusercontent.com/aspnet/AspNetCore/rybrande/ServiceReference/src/Tools/testassets/TestContent/swagger.json.txt";
 
         public OpenApiTestBase(ITestOutputHelper output)
         {
