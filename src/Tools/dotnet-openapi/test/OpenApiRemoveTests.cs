@@ -24,10 +24,10 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                 .Dir()
                 .WithContentFile(nswagJsonFile)
                 .WithContentFile("Startup.cs")
-                .Create(true);
+                .Create();
 
-            var add = new Program(_console, _tempDir.Root);
-            var run = add.Run(new[] { "add", nswagJsonFile });
+            var add = GetApplication();
+            var run = add.Execute(new[] { "add", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -42,8 +42,8 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                 Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFile}\"", content);
             }
 
-            var remove = new Program(_console, _tempDir.Root);
-            var removeRun = remove.Run(new[] { "remove", nswagJsonFile });
+            var remove = GetApplication();
+            var removeRun = remove.Execute(new[] { "remove", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, removeRun);
@@ -69,7 +69,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                .WithTargetFrameworks("netcoreapp3.0")
                .Dir()
                .WithContentFile("Startup.cs")
-               .Create(true);
+               .Create();
 
             using(var refProj = new TemporaryDirectory())
             {
@@ -80,9 +80,9 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                     .Dir()
                     .Create();
 
-                var app = new Program(_console, _tempDir.Root);
+                var app = GetApplication();
                 var refProjFile = Path.Join(refProj.Root, $"{refProjName}.csproj");
-                var run = app.Run(new[] { "add", refProjFile });
+                var run = app.Execute(new[] { "add", refProjFile });
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);
@@ -96,8 +96,8 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                     Assert.Contains($"<OpenApiProjectReference Include=\"{refProjFile}\"", content);
                 }
 
-                var remove = new Program(_console, _tempDir.Root);
-                run = app.Run(new[] { "remove", refProjFile });
+                var remove = GetApplication();
+                run = app.Execute(new[] { "remove", refProjFile });
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);

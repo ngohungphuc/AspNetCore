@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Build.Evaluation;
 using Microsoft.DotNet.OpenApi.Tests;
 using Microsoft.DotNet.Tools;
 using Microsoft.Extensions.Internal;
@@ -20,9 +21,55 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         public OpenApiAddTests(ITestOutputHelper output) : base(output){}
 
         [Fact]
-        public void OpenApi_Add_GlobbingOpenApi()
+        public async Task OpenApi_Add_GlobbingOpenApi()
         {
-            throw new NotImplementedException();
+            var project = CreateBasicProject(withSwagger: true);
+
+            using (var refProj1 = project.Project.Dir().SubDir("refProj1"))
+            using (var refProj2 = project.Project.Dir().SubDir("refProj2"))
+            {
+                refProj1
+                    .WithCSharpProject("refProj")
+                    .WithTargetFrameworks("netcoreapp3.0")
+                    .Dir()
+                    .Create();
+
+                refProj2
+                    .WithCSharpProject("refProj2")
+                    .WithTargetFrameworks("netcoreapp3.0")
+                    .Dir()
+                    .Create();
+
+                var app = GetApplication();
+                var refProjFile = Path.Combine($"*.csproj");
+                var run = app.Execute(new[] { "add", refProjFile });
+
+                Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+                Assert.Equal(0, run);
+
+                // csproj contents
+                using (var csprojStream = new FileInfo(project.Project.Path).OpenRead())
+                using (var reader = new StreamReader(csprojStream))
+                {
+                    var content = await reader.ReadToEndAsync();
+                    Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                    Assert.Contains($"<OpenApiProjectReference Include=\"{refProjFile}\"", content);
+                }
+
+                DoMsBuild(project.Project.Path);
+            }
+        }
+
+        private void DoMsBuild(string projectPath)
+        {
+            var msBuildProject = ProjectCollection.GlobalProjectCollection.LoadProject(
+                projectPath,
+                globalProperties: null,
+                toolsVersion: null);
+            msBuildProject.ReevaluateIfNecessary();
+
+            var projRefs = msBuildProject.GetItems("OpenAPiProjectReference");
+            Assert.Equal(2, projRefs.Count);
         }
 
         [Fact]
@@ -30,13 +77,13 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         {
             var project = CreateBasicProject(withSwagger: true);
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "add", project.NSwagJsonFile });
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", project.NSwagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
 
-            var secondRun = app.Run(new[] { "add", SwaggerJsonUrl});
+            var secondRun = app.Execute(new[] { "add", FakeSwaggerUrl });
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, secondRun);
 
@@ -52,7 +99,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var projXml = new XmlDocument();
             projXml.Load(csproj.FullName);
 
-            var openApiRefs = projXml.GetElementsByTagName(Program.OpenApiReference);
+            var openApiRefs = projXml.GetElementsByTagName(Commands.BaseCommand.OpenApiReference);
             Assert.Same(openApiRefs[0].ParentNode, openApiRefs[1].ParentNode);
         }
 
@@ -64,8 +111,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
 
             var project = CreateBasicProject(withSwagger: false);
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "add", SwaggerJsonUrl, "--class-name", className, "--output-file", expectedJsonName});
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", FakeSwaggerUrl, "--class-name", className, "--output-file", expectedJsonName});
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -86,7 +133,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(jsonStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("\"openapi\":", content);
+                Assert.Equal(Content, content);
             }
         }
 
@@ -96,8 +143,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var project = CreateBasicProject(withSwagger: true);
             var nswagJsonFile = project.NSwagJsonFile;
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "add", nswagJsonFile });
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -131,8 +178,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var project = CreateBasicProject(withSwagger: true);
             var nswagJsonFIle = project.NSwagJsonFile;
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "--project", project.Project.Path, "add", nswagJsonFIle });
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", project.Project.Path, nswagJsonFIle });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -162,9 +209,9 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                     .Dir()
                     .Create();
 
-                var app = new Program(_console, _tempDir.Root);
+                var app = GetApplication();
                 var refProjFile = Path.Join(refProj.Root, $"{refProjName}.csproj");
-                var run = app.Run(new[] { "add", refProjFile });
+                var run = app.Execute(new[] { "add", refProjFile });
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);
@@ -185,8 +232,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         {
             var project = CreateBasicProject(withSwagger: false);
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "add", SwaggerJsonUrl});
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", FakeSwaggerUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -199,7 +246,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             {
                 var content = await reader.ReadToEndAsync();
                 Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
-                Assert.Contains($"<OpenApiReference Include=\"{expectedJsonName}\" ClassName=\"MyClient\" SourceUrl=\"{SwaggerJsonUrl}\"", content);
+                Assert.Contains(
+    $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeSwaggerUrl}"" />", content);
             }
 
             Assert.True(File.Exists(expectedJsonName));
@@ -207,7 +255,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(jsonStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("\"openapi\":", content);
+                Assert.Equal(Content, content);
             }
         }
 
@@ -217,14 +265,14 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var project = CreateBasicProject(withSwagger: true);
             var nswagJsonFile = project.NSwagJsonFile;
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "add", nswagJsonFile });
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
 
-            app = new Program(_console, _tempDir.Root);
-            run = app.Run(new[] { "add", nswagJsonFile });
+            app = GetApplication();
+            run = app.Execute(new[] { "add", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);

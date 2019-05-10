@@ -3,9 +3,9 @@
 
 using System;
 using System.IO;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.DotNet.Tools;
-using Microsoft.Extensions.Tools.Internal;
 using Xunit.Abstractions;
 
 namespace Microsoft.DotNet.OpenApi.Tests
@@ -13,23 +13,21 @@ namespace Microsoft.DotNet.OpenApi.Tests
     public class OpenApiTestBase : IDisposable
     {
         protected readonly TemporaryDirectory _tempDir;
-        protected readonly TestConsole _console;
-        private readonly StringBuilder _output = new StringBuilder();
-        protected readonly StringBuilder _error = new StringBuilder();
+        private readonly TextWriter _output = new StringWriter();
+        protected readonly TextWriter _error = new StringWriter();
         protected readonly ITestOutputHelper _outputHelper;
 
         // TODO: Use a more permanent URL
-        protected const string SwaggerJsonUrl = "https://raw.githubusercontent.com/aspnet/AspNetCore/rybrande/ServiceReference/src/Tools/testassets/TestContent/swagger.json.txt";
+        protected const string Content = @"{""x-generator"": ""NSwag""}";
+        protected const string FakeSwaggerUrl = "https://contoso.com/swagger.json";
 
         public OpenApiTestBase(ITestOutputHelper output)
         {
+            //var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            //MSBuildLocator.RegisterDefaults();
             _tempDir = new TemporaryDirectory();
+            _tempDir.EnsureGlobalJson();
             _outputHelper = output;
-            _console = new TestConsole(output)
-            {
-                Error = new StringWriter(_error),
-                Out = new StringWriter(_output),
-            };
         }
 
         public TemporaryNSwagProject CreateBasicProject(bool withSwagger)
@@ -46,9 +44,22 @@ namespace Microsoft.DotNet.OpenApi.Tests
             }
                 
             tmp.WithContentFile("Startup.cs")
-                .Create(true);
+                .Create();
 
             return new TemporaryNSwagProject(project, nswagJsonFile);
+        }
+
+        internal Application GetApplication()
+        {
+            return new Application(
+                CancellationToken.None,
+                _tempDir.Root,
+                DownloadMock, _output, _error);
+        }
+
+        private Task<string> DownloadMock(string url)
+        {
+            return Task.FromResult(Content);
         }
 
         public void Dispose()

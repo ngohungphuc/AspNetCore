@@ -18,8 +18,8 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
         {
             CreateBasicProject(withSwagger: false);
 
-            var app = new Program(_console, _tempDir.Root);
-            var run = app.Run(new[] { "add", SwaggerJsonUrl });
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", FakeSwaggerUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -32,8 +32,8 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
             var jsonInfo = new FileInfo(expectedJsonPath);
             var firstWriteTime = jsonInfo.LastWriteTime;
 
-            app = new Program(_console, _tempDir.Root);
-            run = app.Run(new[] { "refresh", SwaggerJsonUrl });
+            app = GetApplication();
+            run = app.Execute(new[] { "refresh", FakeSwaggerUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);

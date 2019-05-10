@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace Microsoft.DotNet.Tools
 {
@@ -72,7 +74,7 @@ namespace Microsoft.DotNet.Tools
             return _parent;
         }
 
-        public void Create(bool web = false)
+        public void Create()
         {
             Directory.CreateDirectory(Root);
 
@@ -83,13 +85,22 @@ namespace Microsoft.DotNet.Tools
 
             foreach (var project in _projects)
             {
-                project.Create(web);
+                project.Create();
             }
 
             foreach (var file in _files)
             {
                 CreateFile(file.Key, file.Value);
             }
+        }
+
+        public TemporaryDirectory EnsureGlobalJson()
+        {
+            var attributes = typeof(TemporaryDirectory).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>();
+            var repoRoot = attributes.Single(a => string.Equals(a.Key, "RepositoryRoot", StringComparison.OrdinalIgnoreCase));
+            var contents = File.ReadAllText(Path.Combine(repoRoot.Value, "global.json"));
+            _files.Add("global.json", contents);
+            return this;
         }
 
         public void CreateFile(string filename, string contents)

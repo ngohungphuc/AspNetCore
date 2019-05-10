@@ -11,18 +11,7 @@ namespace Microsoft.DotNet.Tools
     public class TemporaryCSharpProject
     {
         private const string Template =
- @"<Project Sdk=""Microsoft.NET.Sdk"">
-  <PropertyGroup>
-    {0}
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
-  <ItemGroup>
-    {1}
-  </ItemGroup>
-</Project>";
-
-        private const string WebTemplate =
-@"<Project Sdk=""Microsoft.NET.Sdk.Web"">
+ @"<Project Sdk=""Microsoft.NET.Sdk.Web"">
   <PropertyGroup>
     {0}
     <OutputType>Exe</OutputType>
@@ -104,9 +93,9 @@ namespace Microsoft.DotNet.Tools
 
         public TemporaryDirectory Dir() => _directory;
 
-        public void Create(bool web = false)
+        public void Create()
         {
-            _directory.CreateFile(_filename, string.Format(web ? WebTemplate : Template, string.Join("\r\n", _properties), string.Join("\r\n", _items)));
+            _directory.CreateFile(_filename, string.Format(Template, string.Join("\r\n", _properties), string.Join("\r\n", _items)));
         }
 
         public class ItemSpec

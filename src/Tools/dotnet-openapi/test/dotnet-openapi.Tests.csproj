@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>Microsoft.DotNet.Open.Api.Tools.Tests</AssemblyName>
@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Microsoft.Build" ExcludeAssets="runtime" />
     <ProjectReference Include="..\src\dotnet-openapi.csproj" />
-    <Reference Include="Microsoft.Build.Utilities.Core" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +26,10 @@
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
       <_Parameter1>TestSettings:RuntimeFrameworkVersion</_Parameter1>
       <_Parameter2>$(RuntimeFrameworkVersion)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>RepositoryRoot</_Parameter1>
+      <_Parameter2>$(RepositoryRoot)</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>
 
