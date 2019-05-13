@@ -30,6 +30,7 @@
     <FileNamesToSign Include="dotnet-user-secrets.exe" CertificateName="Microsoft400" />
     <FileNamesToSign Include="dotnet-watch.exe" CertificateName="Microsoft400" />
     <FileNamesToSign Include="Microsoft.AspNetCore.Blazor.Build.exe" CertificateName="Microsoft400" />
+    <FileNamesToSign Include="Microsoft.Build.Locator.dll" CertificateName="Microsoft400" />
     <FileNamesToSign Include="sni.dll" CertificateName="Microsoft400" />
 
     <!-- Third-party components which should be signed.  -->
