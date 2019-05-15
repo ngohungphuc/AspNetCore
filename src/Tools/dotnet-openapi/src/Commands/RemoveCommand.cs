@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
         protected override Task<int> ExecuteCoreAsync()
         {
-            var projectFile = ResolveProjectFile(Parent.ProjectFileArg);
+            var projectFile = ResolveProjectFile(ProjectFileOption);
 
             var sourceFile = Ensure.NotNullOrEmpty(SourceFileArg.Value, SourceFileArgName);
 

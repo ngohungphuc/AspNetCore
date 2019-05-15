@@ -27,7 +27,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                 .Create();
 
             var add = GetApplication();
-            var run = add.Execute(new[] { "add", nswagJsonFile });
+            var run = add.Execute(new[] { "add", "file", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -82,7 +82,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
 
                 var app = GetApplication();
                 var refProjFile = Path.Join(refProj.Root, $"{refProjName}.csproj");
-                var run = app.Execute(new[] { "add", refProjFile });
+                var run = app.Execute(new[] { "add", "project", refProjFile });
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);

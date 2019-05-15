@@ -4,7 +4,6 @@
 using System;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Build.Locator;
 using Microsoft.DotNet.OpenApi.Commands;
@@ -20,13 +19,11 @@ namespace Microsoft.DotNet.OpenApi
         }
 
         public Application(
-            CancellationToken cancellationToken,
             string workingDir,
             Func<string, Task<string>> downloadProvider,
             TextWriter output = null,
             TextWriter error = null)
         {
-            CancellationToken = cancellationToken;
             DownloadProvider = downloadProvider;
             Out = output ?? Out;
             Error = error ?? Error;
@@ -38,18 +35,12 @@ namespace Microsoft.DotNet.OpenApi
             Description = "OpenApi reference management operations.";
             ShortVersionGetter = GetInformationalVersion;
 
-            ProjectFileArg = Argument("project", "The project to add a reference to");
-
             HelpOption("-?|-h|--help");
 
             Commands.Add(new AddCommand(this));
             Commands.Add(new RemoveCommand(this));
             Commands.Add(new RefreshCommand(this));
         }
-
-        public CommandArgument ProjectFileArg{ get; }
-
-        public CancellationToken CancellationToken { get; }
 
         public Func<string, Task<string>> DownloadProvider { get; }
 

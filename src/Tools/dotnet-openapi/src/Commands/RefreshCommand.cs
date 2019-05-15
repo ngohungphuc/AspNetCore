@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
         protected override async Task<int> ExecuteCoreAsync()
         {
-            var projectFile = ResolveProjectFile(Parent.ProjectFileArg);
+            var projectFile = ResolveProjectFile(ProjectFileOption);
 
             var sourceFile = Ensure.NotNullOrEmpty(SourceFileArg.Value, SourceFileArgName);
 
@@ -28,7 +28,6 @@ namespace Microsoft.DotNet.OpenApi.Commands
                 var destination = FindReferenceFromUrl(projectFile, sourceFile);
                 using (var client = new HttpClient())
                 {
-
                     await DownloadAndOverwriteAsync(sourceFile, destination, overwrite: true);
                 }
             }

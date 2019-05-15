@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
             CreateBasicProject(withSwagger: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", FakeSwaggerUrl });
+            var run = app.Execute(new[] { "add", "file", FakeSwaggerUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);

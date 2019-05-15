@@ -24,22 +24,31 @@ namespace Microsoft.DotNet.OpenApi.Commands
         public const string OpenApiProjectReference = "OpenApiProjectReference";
         protected const string SourceUrlAttrName = "SourceUrl";
         
-        public BaseCommand(Application parent, string name)
+        public BaseCommand(CommandLineApplication parent, string name)
         {
-            base.Parent = parent;
+            Parent = parent;
             Name = name;
             Out = parent.Out ?? Out;
             Error = parent.Error ?? Error;
 
             SourceFileArg = Argument(SourceFileArgName, $"The openapi file to {name}. This can be a path to a local openapi file, " +
                "a URI to a remote openapi file or a path to a *.csproj file containing openapi endpoints", multipleValues: true);
-            
+            ProjectFileOption = Option("-p|--project", "The project to add a reference to", CommandOptionType.SingleValue);
+
             Help = HelpOption("-?|-h|--help");
-            WorkingDir = Parent.WorkingDir;
+            if(Parent is Application)
+            {
+                WorkingDir = ((Application)Parent).WorkingDir;
+            }
+            else
+            {
+                WorkingDir = ((Application)Parent.Parent).WorkingDir;
+            }
+
             OnExecute(ExecuteAsync);
         }
 
-        protected new Application Parent => (Application)base.Parent;
+        public CommandOption ProjectFileOption { get; }
 
         public CommandArgument SourceFileArg { get; }
          
@@ -55,7 +64,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
         private async Task<int> ExecuteAsync()
         {
-            if (!ValidateArguments())
+            if (!ValidateArguments() || Help.HasValue())
             {
                 ShowHelp();
                 return 1;
@@ -64,33 +73,12 @@ namespace Microsoft.DotNet.OpenApi.Commands
             return await ExecuteCoreAsync();
         }
 
-        internal IEnumerable<string> ResolveSourceFiles(CommandArgument sourceArg)
-        {
-            var result = new List<string>();
-            foreach (var sourceFile in sourceArg.Values)
-            {
-                if (sourceFile.Contains("*"))
-                {
-                    result.AddRange(Directory.EnumerateFiles(WorkingDir, sourceFile));
-                }
-                else
-                {
-                    if (File.Exists(sourceFile))
-                    {
-                        result.Add(sourceFile);
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        internal FileInfo ResolveProjectFile(CommandArgument projectArg)
+        internal FileInfo ResolveProjectFile(CommandOption projectOption)
         {
             string csproj;
-            if (!string.IsNullOrEmpty(projectArg.Value))
+            if (projectOption.HasValue())
             {
-                csproj = projectArg.Value;
+                csproj = projectOption.Value();
                 csproj = Path.Combine(WorkingDir, csproj);
                 if (!File.Exists(csproj))
                 {
@@ -130,20 +118,24 @@ namespace Microsoft.DotNet.OpenApi.Commands
             return File.Exists(file) && file.EndsWith(".csproj");
         }
 
-        internal bool IsLocalFile(string file)
-        {
-            var fullPath = Path.Join(WorkingDir, file);
-            return File.Exists(fullPath) && file.EndsWith(".json");
-        }
-
         internal bool IsUrl(string file)
         {
-            return Uri.TryCreate(file, UriKind.Absolute, out var _);
+            return Uri.TryCreate(file, UriKind.Absolute, out var _) && file.StartsWith("http");
         }
 
         public async Task DownloadAndOverwriteAsync(string sourceFile, string destinationPath, bool overwrite)
         {
-            var content = await Parent.DownloadProvider(sourceFile);
+            Application parent;
+            if(Parent is Application)
+            {
+                parent = (Application)Parent;
+            }
+            else
+            {
+                parent = (Application)Parent.Parent;
+            }
+
+            var content = await parent.DownloadProvider(sourceFile);
             await WriteToFile(content, destinationPath, overwrite);
         }
 

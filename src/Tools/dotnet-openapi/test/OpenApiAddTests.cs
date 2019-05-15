@@ -40,7 +40,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
 
                 var app = GetApplication();
 
-                var run = app.Execute(new[] { "add", csProj1.Path, csproj2.Path});
+                var run = app.Execute(new[] { "add", "project", csProj1.Path, csproj2.Path});
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);
@@ -63,12 +63,12 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var project = CreateBasicProject(withSwagger: true);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", project.NSwagJsonFile });
+            var run = app.Execute(new[] { "add", "file", project.NSwagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
 
-            var secondRun = app.Execute(new[] { "add", FakeSwaggerUrl });
+            var secondRun = app.Execute(new[] { "add", "file", FakeSwaggerUrl });
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, secondRun);
 
@@ -97,7 +97,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var project = CreateBasicProject(withSwagger: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", FakeSwaggerUrl, "--class-name", className, "--output-file", expectedJsonName});
+            var run = app.Execute(new[] { "add", "file", FakeSwaggerUrl, "--class-name", className, "--output-file", expectedJsonName});
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -129,7 +129,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var nswagJsonFile = project.NSwagJsonFile;
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", nswagJsonFile });
+            var run = app.Execute(new[] { "add", "file", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -164,7 +164,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var nswagJsonFIle = project.NSwagJsonFile;
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", project.Project.Path, nswagJsonFIle });
+            var run = app.Execute(new[] { "add", "file", "--project", project.Project.Path, nswagJsonFIle });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -196,7 +196,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
 
                 var app = GetApplication();
                 var refProjFile = Path.Join(refProj.Root, $"{refProjName}.csproj");
-                var run = app.Execute(new[] { "add", refProjFile });
+                var run = app.Execute(new[] { "add", "project", refProjFile });
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);
@@ -218,7 +218,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var project = CreateBasicProject(withSwagger: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", FakeSwaggerUrl });
+            var run = app.Execute(new[] { "add", "file", FakeSwaggerUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -251,13 +251,13 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             var nswagJsonFile = project.NSwagJsonFile;
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", nswagJsonFile });
+            var run = app.Execute(new[] { "add", "file", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
 
             app = GetApplication();
-            run = app.Execute(new[] { "add", nswagJsonFile });
+            run = app.Execute(new[] { "add", "file", nswagJsonFile });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);

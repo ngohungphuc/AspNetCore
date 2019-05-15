@@ -9,7 +9,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Tools.Internal;
 
 namespace Microsoft.DotNet.OpenApi.Commands
 {
@@ -20,55 +19,19 @@ namespace Microsoft.DotNet.OpenApi.Commands
         public AddCommand(Application parent)
             : base(parent, CommandName)
         {
-            _classNameOpt = Option("-c|--class-name", "The name of the class to be generated", CommandOptionType.SingleValue);
-            _outputFileOpt = Option("-o|--output-file", "The name of the file to output the swagger file to", CommandOptionType.SingleValue);
+            Commands.Add(new AddFileCommand(this));
+            Commands.Add(new AddProjectCommand(this));
         }
 
-        private readonly CommandOption _classNameOpt;
-        private readonly CommandOption _outputFileOpt;
+        internal new Application Parent => (Application)base.Parent;
 
-        protected override async Task<int> ExecuteCoreAsync()
+        protected override Task<int> ExecuteCoreAsync()
         {
-            var className = _classNameOpt.Value();
-            var outputFile = _outputFileOpt.HasValue() ? _outputFileOpt.Value() : DefaultSwaggerFile;
-
-            ResolveSourceFiles(SourceFileArg);
-            var projectFilePath = ResolveProjectFile(Parent.ProjectFileArg);
-
-            Ensure.NotNullOrEmpty(SourceFileArg.Value, SourceFileArgName);
-
-            foreach (var sourceFile in SourceFileArg.Values)
-            {
-                var codeGenerator = CodeGenerator.NSwagCSharp;
-                EnsurePackagesInProject(projectFilePath, codeGenerator);
-                if (IsProjectFile(sourceFile))
-                {
-                    AddServiceReference(OpenApiProjectReference, projectFilePath, sourceFile, className, codeGenerator);
-                }
-                else if (IsLocalFile(sourceFile))
-                {
-                    AddServiceReference(OpenApiReference, projectFilePath, sourceFile, className, codeGenerator);
-                }
-                else if (IsUrl(sourceFile))
-                {
-                    var destination = Path.Combine(WorkingDir, outputFile);
-                    // We have to download the file from that url, save it to a local file, then create a AddServiceLocalReference
-                    // Use this task https://github.com/aspnet/AspNetCore/commit/91dcbd44c10af893374cfb36dc7a009caa4818d0#diff-ea7515a116529b85ad5aa8e06e4acc8e
-                    await DownloadAndOverwriteAsync(sourceFile, destination, overwrite: false);
-
-                    AddServiceReference(OpenApiReference, projectFilePath, destination, className, codeGenerator, sourceFile);
-                }
-                else
-                {
-                    Error.Write($"{SourceFileArgName} of '{sourceFile}' was not valid. Valid values are: a JSON file, a Project File or a Url");
-                    throw new ArgumentException();
-                }
-            }
-
-            return 0;
+            ShowHelp();
+            return Task.FromResult(1);
         }
 
-        private void EnsurePackagesInProject(FileInfo projectFile, CodeGenerator codeGenerator)
+        internal void EnsurePackagesInProject(FileInfo projectFile, CodeGenerator codeGenerator)
         {
             var packages = GetServicePackages(codeGenerator);
             foreach (var (packageId, version) in packages)
@@ -103,6 +66,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
                 }
             }
         }
+
         private static IEnumerable<Tuple<string, string>> GetServicePackages(CodeGenerator type)
         {
             var name = Enum.GetName(typeof(CodeGenerator), type);
@@ -121,7 +85,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
             return result;
         }
 
-        private void AddServiceReference(
+        internal void AddServiceReference(
             string tagName,
             FileInfo projectFile,
             string sourceFile,

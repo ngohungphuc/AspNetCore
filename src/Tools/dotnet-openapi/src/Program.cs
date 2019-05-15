@@ -4,7 +4,6 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.OpenApi.Tasks;
 
@@ -14,14 +13,10 @@ namespace Microsoft.DotNet.OpenApi
     {
         public static int Main(string[] args)
         {
-            var cancel = new CancellationTokenSource();
-            Console.CancelKeyPress += (sender, e) => { cancel.Cancel(); };
-
             var outputWriter = new StringWriter();
             var errorWriter = new StringWriter();
 
             var application = new Application(
-                cancel.Token,
                 Directory.GetCurrentDirectory(),
                 DownloadAsync,
                 outputWriter,

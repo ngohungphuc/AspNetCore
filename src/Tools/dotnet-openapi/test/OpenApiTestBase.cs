@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.DotNet.Tools;
 using Xunit.Abstractions;
@@ -13,18 +12,15 @@ namespace Microsoft.DotNet.OpenApi.Tests
     public class OpenApiTestBase : IDisposable
     {
         protected readonly TemporaryDirectory _tempDir;
-        private readonly TextWriter _output = new StringWriter();
+        protected readonly TextWriter _output = new StringWriter();
         protected readonly TextWriter _error = new StringWriter();
         protected readonly ITestOutputHelper _outputHelper;
 
-        // TODO: Use a more permanent URL
         protected const string Content = @"{""x-generator"": ""NSwag""}";
         protected const string FakeSwaggerUrl = "https://contoso.com/swagger.json";
 
         public OpenApiTestBase(ITestOutputHelper output)
         {
-            //var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            //MSBuildLocator.RegisterDefaults();
             _tempDir = new TemporaryDirectory();
             _tempDir.EnsureGlobalJson();
             _outputHelper = output;
@@ -52,7 +48,6 @@ namespace Microsoft.DotNet.OpenApi.Tests
         internal Application GetApplication()
         {
             return new Application(
-                CancellationToken.None,
                 _tempDir.Root,
                 DownloadMock, _output, _error);
         }
