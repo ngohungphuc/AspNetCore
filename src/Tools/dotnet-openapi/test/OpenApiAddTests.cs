@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using Microsoft.Build.Evaluation;
 using Microsoft.DotNet.OpenApi.Tests;
 using Microsoft.DotNet.Tools;
 using Microsoft.Extensions.Internal;
@@ -27,21 +26,21 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var refProj1 = project.Project.Dir().SubDir("refProj1"))
             using (var refProj2 = project.Project.Dir().SubDir("refProj2"))
             {
-                refProj1
-                    .WithCSharpProject("refProj")
+                var csProj1 = refProj1.WithCSharpProject("refProj");
+                csProj1
                     .WithTargetFrameworks("netcoreapp3.0")
                     .Dir()
                     .Create();
 
-                refProj2
-                    .WithCSharpProject("refProj2")
+                var csproj2 = refProj2.WithCSharpProject("refProj2");
+                csproj2
                     .WithTargetFrameworks("netcoreapp3.0")
                     .Dir()
                     .Create();
 
                 var app = GetApplication();
-                var refProjFile = Path.Combine($"*.csproj");
-                var run = app.Execute(new[] { "add", refProjFile });
+
+                var run = app.Execute(new[] { "add", csProj1.Path, csproj2.Path});
 
                 Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
                 Assert.Equal(0, run);
@@ -52,23 +51,10 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 {
                     var content = await reader.ReadToEndAsync();
                     Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
-                    Assert.Contains($"<OpenApiProjectReference Include=\"{refProjFile}\"", content);
+                    Assert.Contains($"<OpenApiProjectReference Include=\"{csProj1.Path}\"", content);
+                    Assert.Contains($"<OpenApiProjectReference Include=\"{csproj2.Path}\"", content);
                 }
-
-                DoMsBuild(project.Project.Path);
             }
-        }
-
-        private void DoMsBuild(string projectPath)
-        {
-            var msBuildProject = ProjectCollection.GlobalProjectCollection.LoadProject(
-                projectPath,
-                globalProperties: null,
-                toolsVersion: null);
-            msBuildProject.ReevaluateIfNecessary();
-
-            var projRefs = msBuildProject.GetItems("OpenAPiProjectReference");
-            Assert.Equal(2, projRefs.Count);
         }
 
         [Fact]
