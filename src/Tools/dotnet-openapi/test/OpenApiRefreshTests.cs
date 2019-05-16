@@ -1,7 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.DotNet.OpenApi.Tests;
 using Xunit;
@@ -11,7 +13,7 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
 {
     public class OpenApiRefreshTests : OpenApiTestBase
     {
-        public OpenApiRefreshTests(ITestOutputHelper output) : base(output){}
+        public OpenApiRefreshTests(ITestOutputHelper output) : base(output) { }
 
         [Fact]
         public async Task OpenApi_Refresh_Basic()
@@ -32,6 +34,8 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
             var jsonInfo = new FileInfo(expectedJsonPath);
             var firstWriteTime = jsonInfo.LastWriteTime;
 
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+
             app = GetApplication();
             run = app.Execute(new[] { "refresh", FakeSwaggerUrl });
 
@@ -39,7 +43,7 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
             Assert.Equal(0, run);
 
             var secondWriteTime = new FileInfo(expectedJsonPath).LastWriteTime;
-            Assert.True(firstWriteTime < secondWriteTime, $"File wasn't updated! ${firstWriteTime} ${secondWriteTime}");
+            Assert.True(firstWriteTime < secondWriteTime, $"File wasn't updated! {firstWriteTime} {secondWriteTime}");
         }
     }
 }
