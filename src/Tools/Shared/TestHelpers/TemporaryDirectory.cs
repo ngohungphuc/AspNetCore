@@ -97,7 +97,7 @@ namespace Microsoft.DotNet.Tools
         public TemporaryDirectory EnsureGlobalJson()
         {
             var attributes = typeof(TemporaryDirectory).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>();
-            var repoRoot = attributes.Single(a => string.Equals(a.Key, "RepositoryRoot", StringComparison.OrdinalIgnoreCase));
+            var repoRoot = attributes.Single(a => string.Equals(a.Key, "RepoRoot", StringComparison.OrdinalIgnoreCase));
             var contents = File.ReadAllText(Path.Combine(repoRoot.Value, "global.json"));
             _files.Add("global.json", contents);
             return this;
