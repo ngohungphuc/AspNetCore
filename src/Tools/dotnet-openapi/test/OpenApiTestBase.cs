@@ -22,7 +22,6 @@ namespace Microsoft.DotNet.OpenApi.Tests
         public OpenApiTestBase(ITestOutputHelper output)
         {
             _tempDir = new TemporaryDirectory();
-            _tempDir.EnsureGlobalJson();
             _outputHelper = output;
         }
 
@@ -34,11 +33,11 @@ namespace Microsoft.DotNet.OpenApi.Tests
                 .WithTargetFrameworks("netcoreapp3.0");
             var tmp = project.Dir();
 
-            if(withSwagger)
+            if (withSwagger)
             {
                 tmp = tmp.WithContentFile(nswagJsonFile);
             }
-                
+
             tmp.WithContentFile("Startup.cs")
                 .Create();
 
