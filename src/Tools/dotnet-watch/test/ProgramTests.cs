@@ -6,7 +6,6 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Testing;
-using Microsoft.DotNet.Tools;
 using Microsoft.Extensions.Tools.Internal;
 using Xunit;
 using Xunit.Abstractions;
@@ -31,7 +30,7 @@ namespace Microsoft.DotNet.Watcher.Tools.Tests
                 .WithCSharpProject("testproj")
                 .WithTargetFrameworks("netcoreapp3.0")
                 .Dir()
-                .WithEmptyFile("Program.cs")
+                .WithFile("Program.cs")
                 .Create();
 
             var output = new StringBuilder();

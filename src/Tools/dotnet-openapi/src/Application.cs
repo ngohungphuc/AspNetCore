@@ -20,7 +20,7 @@ namespace Microsoft.DotNet.OpenApi
 
         public Application(
             string workingDirectory,
-            Func<string, Task<string>> downloadProvider,
+            Func<string, Task<Stream>> downloadProvider,
             TextWriter output = null,
             TextWriter error = null)
         {
@@ -42,7 +42,7 @@ namespace Microsoft.DotNet.OpenApi
             Commands.Add(new RefreshCommand(this));
         }
 
-        public Func<string, Task<string>> DownloadProvider { get; }
+        public Func<string, Task<Stream>> DownloadProvider { get; }
 
         public string WorkingDirectory { get; }
 

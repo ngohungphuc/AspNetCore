@@ -2,14 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.OpenApi.Tasks;
-using Microsoft.Extensions.Tools.Internal;
 
 namespace Microsoft.DotNet.OpenApi.Commands
 {
@@ -18,7 +19,6 @@ namespace Microsoft.DotNet.OpenApi.Commands
         protected string WorkingDirectory;
 
         protected const string SourceProjectArgName = "source-file";
-        protected const string DefaultSwaggerFile = "swagger.v1.json";
         public const string OpenApiReference = "OpenApiReference";
         public const string OpenApiProjectReference = "OpenApiProjectReference";
         protected const string SourceUrlAttrName = "SourceUrl";
@@ -66,32 +66,32 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
         internal FileInfo ResolveProjectFile(CommandOption projectOption)
         {
-            string csproj;
+            string project;
             if (projectOption.HasValue())
             {
-                csproj = projectOption.Value();
-                csproj = Path.Combine(WorkingDirectory, csproj);
-                if (!File.Exists(csproj))
+                project = projectOption.Value();
+                project = Path.Combine(WorkingDirectory, project);
+                if (!File.Exists(project))
                 {
-                    Error.Write("The given csproj does not exist.");
+                    Error.Write("The given project does not exist.");
                 }
             }
             else
             {
-                var csprojs = Directory.GetFiles(WorkingDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
-                if (csprojs.Length == 0)
+                var projects = Directory.GetFiles(WorkingDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
+                if (projects.Length == 0)
                 {
-                    Error.Write("No csproj files were found in the current directory. Either move to a new directory or provide the project explicitly");
+                    Error.Write("No project files were found in the current directory. Either move to a new directory or provide the project explicitly");
                 }
-                if (csprojs.Length > 1)
+                if (projects.Length > 1)
                 {
-                    Error.Write("More than one csproj was found in this directory, either remove a duplicate or explicitly provide the project.");
+                    Error.Write("More than one project was found in this directory, either remove a duplicate or explicitly provide the project.");
                 }
 
-                csproj = csprojs.Single();
+                project = projects[0];
             }
 
-            return new FileInfo(csproj);
+            return new FileInfo(project);
         }
 
         protected Project LoadProject(FileInfo projectFile)
@@ -114,23 +114,104 @@ namespace Microsoft.DotNet.OpenApi.Commands
             return Uri.TryCreate(file, UriKind.Absolute, out var _) && file.StartsWith("http");
         }
 
-        public async Task DownloadAndOverwriteAsync(string sourceFile, string destinationPath, bool overwrite)
+        internal void AddServiceReference(
+            string tagName,
+            FileInfo projectFile,
+            string sourceFile,
+            string sourceUrl = null)
         {
-            Application parent;
-            if(Parent is Application)
+            var project = LoadProject(projectFile);
+            var items = project.GetItems(tagName);
+            var item = items.SingleOrDefault(i => string.Equals(i.EvaluatedInclude, sourceFile));
+
+            if (item == null)
             {
-                parent = (Application)Parent;
+                var metadata = new Dictionary<string, string>();
+
+                if (!string.IsNullOrEmpty(sourceUrl))
+                {
+                    metadata[SourceUrlAttrName] = sourceUrl;
+                }
+
+                project.AddElementWithAttributes(tagName, sourceFile, metadata);
             }
             else
             {
-                parent = (Application)Parent.Parent;
+                Out.Write($"A reference to '{sourceFile}' already exists in '{project.FullPath}'.");
+            }
+        }
+
+        internal async Task DownloadToFileAsync(string url, string destinationPath, bool overwrite)
+        {
+            Application application;
+            if(Parent is Application)
+            {
+                application = (Application)Parent;
+            }
+            else
+            {
+                application = (Application)Parent.Parent;
             }
 
-            var content = await parent.DownloadProvider(sourceFile);
+            var content = await application.DownloadProvider(url);
             await WriteToFile(content, destinationPath, overwrite);
         }
 
-        private async Task WriteToFile(string content, string destinationPath, bool overwrite)
+        internal void EnsurePackagesInProject(FileInfo projectFile, CodeGenerator codeGenerator)
+        {
+            var packages = GetServicePackages(codeGenerator);
+            foreach (var (packageId, version) in packages)
+            {
+                var args = new string[] {
+                    "add",
+                    "package",
+                    packageId,
+                    "--version",
+                    version,
+                    "--no-restore"
+                };
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = DotNetMuxer.MuxerPath,
+                    Arguments = string.Join(" ", args),
+                    WorkingDirectory = projectFile.Directory.FullName,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                };
+
+                var process = Process.Start(startInfo);
+                process.WaitForExit(20 * 1000);
+
+                if (process.ExitCode != 0)
+                {
+                    Error.Write(process.StandardError.ReadToEnd());
+                    Error.Write(process.StandardOutput.ReadToEnd());
+                    Error.Write($"Could not add package `{packageId}` to `{projectFile.Directory}`");
+                    throw new ArgumentException();
+                }
+            }
+        }
+
+        private static IEnumerable<Tuple<string, string>> GetServicePackages(CodeGenerator type)
+        {
+            var name = Enum.GetName(typeof(CodeGenerator), type);
+            var attributes = typeof(Program).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>();
+            var attribute = attributes.Single(a => string.Equals(a.Key, name, StringComparison.OrdinalIgnoreCase));
+
+            var packages = attribute.Value.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            var result = new List<Tuple<string, string>>();
+            foreach (var package in packages)
+            {
+                var tmp = package.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                Debug.Assert(tmp.Length == 2);
+                result.Add(new Tuple<string, string>(tmp[0], tmp[1]));
+            }
+
+            return result;
+        }
+
+        private async Task WriteToFile(Stream content, string destinationPath, bool overwrite)
         {
             var destinationExists = File.Exists(destinationPath);
             if (destinationExists && !overwrite)
@@ -180,7 +261,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
                 reachedCopy = true;
                 using (var outStream = File.Create(destinationPath))
                 {
-                    outStream.Write((Encoding.UTF8.GetBytes(content)));
+                    await content.CopyToAsync(outStream);
 
                     await outStream.FlushAsync();
                 }

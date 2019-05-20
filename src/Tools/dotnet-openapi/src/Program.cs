@@ -36,11 +36,11 @@ namespace Microsoft.DotNet.OpenApi
             return result;
         }
 
-        public static async Task<string> DownloadAsync(string url)
+        public static async Task<Stream> DownloadAsync(string url)
         {
             using (var client = new HttpClient())
             {
-                return await client.DownloadAsync(url);
+                return await client.GetStreamAsync(url);
             }
         }
     }

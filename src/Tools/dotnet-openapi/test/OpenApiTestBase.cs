@@ -51,9 +51,15 @@ namespace Microsoft.DotNet.OpenApi.Tests
                 DownloadMock, _output, _error);
         }
 
-        private Task<string> DownloadMock(string url)
+        private Task<Stream> DownloadMock(string url)
         {
-            return Task.FromResult(Content);
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(Content);
+            writer.Flush();
+            stream.Position = 0;
+
+            return Task.FromResult((Stream)stream);
         }
 
         public void Dispose()

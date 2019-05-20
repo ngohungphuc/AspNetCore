@@ -33,7 +33,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
                 var destination = FindReferenceFromUrl(projectFile, sourceFile);
                 using (var client = new HttpClient())
                 {
-                    await DownloadAndOverwriteAsync(sourceFile, destination, overwrite: true);
+                    await DownloadToFileAsync(sourceFile, destination, overwrite: true);
                 }
             }
             else

@@ -15,33 +15,26 @@ namespace Microsoft.DotNet.OpenApi.Commands
         public AddProjectCommand(BaseCommand parent)
             : base(parent, CommandName)
         {
-            _classNameOpt = Option("-c|--class-name", "The name of the class to be generated", CommandOptionType.SingleValue);
-            _sourceProjectArg = Argument(SourceProjectArgName, $"The openapi project to add. This must be a path to *.csproj file containing openapi endpoints", multipleValues: true);
+            _sourceProjectArg = Argument(SourceProjectArgName, $"The openapi project to add. This must be the path to project file(s) containing openapi endpoints", multipleValues: true);
         }
-
-        internal readonly CommandOption _classNameOpt;
 
         internal readonly CommandArgument _sourceProjectArg;
 
-        private new AddCommand Parent => (AddCommand)base.Parent;
-
         protected override Task<int> ExecuteCoreAsync()
         {
-            var className = _classNameOpt.Value();
-
             var projectFilePath = ResolveProjectFile(ProjectFileOption);
 
             foreach (var sourceFile in _sourceProjectArg.Values)
             {
                 var codeGenerator = CodeGenerator.NSwagCSharp;
-                Parent.EnsurePackagesInProject(projectFilePath, codeGenerator);
+                EnsurePackagesInProject(projectFilePath, codeGenerator);
                 if (IsProjectFile(sourceFile))
                 {
-                    Parent.AddServiceReference(OpenApiProjectReference, projectFilePath, sourceFile, className);
+                    AddServiceReference(OpenApiProjectReference, projectFilePath, sourceFile);
                 }
                 else
                 {
-                    Error.Write($"{SourceProjectArgName} of '{sourceFile}' was not valid. Valid values are: a JSON file, a Project File or a Url");
+                    Error.Write($"{SourceProjectArgName} of '{sourceFile}' was not valid. Valid values must be project file(s)");
                     throw new ArgumentException();
                 }
             }

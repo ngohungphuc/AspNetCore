@@ -21,12 +21,12 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
             CreateBasicProject(withSwagger: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", "file", FakeSwaggerUrl });
+            var run = app.Execute(new[] { "add", "url", FakeSwaggerUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
 
-            var expectedJsonPath = Path.Combine(_tempDir.Root, "swagger.v1.json");
+            var expectedJsonPath = Path.Combine(_tempDir.Root, "openapi", "openapi.json");
             var json = await File.ReadAllTextAsync(expectedJsonPath);
             json += "trash";
             await File.WriteAllTextAsync(expectedJsonPath, json);
