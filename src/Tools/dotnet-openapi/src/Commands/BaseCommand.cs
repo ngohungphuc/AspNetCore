@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,9 +15,9 @@ namespace Microsoft.DotNet.OpenApi.Commands
 {
     internal abstract class BaseCommand : CommandLineApplication
     {
-        protected string WorkingDir;
+        protected string WorkingDirectory;
 
-        protected const string SourceFileArgName = "source-file";
+        protected const string SourceProjectArgName = "source-file";
         protected const string DefaultSwaggerFile = "swagger.v1.json";
         public const string OpenApiReference = "OpenApiReference";
         public const string OpenApiProjectReference = "OpenApiProjectReference";
@@ -31,36 +30,28 @@ namespace Microsoft.DotNet.OpenApi.Commands
             Out = parent.Out ?? Out;
             Error = parent.Error ?? Error;
 
-            SourceFileArg = Argument(SourceFileArgName, $"The openapi file to {name}. This can be a path to a local openapi file, " +
-               "a URI to a remote openapi file or a path to a *.csproj file containing openapi endpoints", multipleValues: true);
             ProjectFileOption = Option("-p|--project", "The project to add a reference to", CommandOptionType.SingleValue);
 
             Help = HelpOption("-?|-h|--help");
             if(Parent is Application)
             {
-                WorkingDir = ((Application)Parent).WorkingDir;
+                WorkingDirectory = ((Application)Parent).WorkingDirectory;
             }
             else
             {
-                WorkingDir = ((Application)Parent.Parent).WorkingDir;
+                WorkingDirectory = ((Application)Parent.Parent).WorkingDirectory;
             }
 
             OnExecute(ExecuteAsync);
         }
 
         public CommandOption ProjectFileOption { get; }
-
-        public CommandArgument SourceFileArg { get; }
-         
+                 
         internal CommandOption Help { get; }
 
         protected abstract Task<int> ExecuteCoreAsync();
 
-        protected virtual bool ValidateArguments()
-        {
-            Ensure.NotNullOrEmpty(SourceFileArg.Value, SourceFileArgName);
-            return true;
-        }
+        protected abstract bool ValidateArguments();
 
         private async Task<int> ExecuteAsync()
         {
@@ -79,7 +70,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
             if (projectOption.HasValue())
             {
                 csproj = projectOption.Value();
-                csproj = Path.Combine(WorkingDir, csproj);
+                csproj = Path.Combine(WorkingDirectory, csproj);
                 if (!File.Exists(csproj))
                 {
                     Error.Write("The given csproj does not exist.");
@@ -87,7 +78,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
             }
             else
             {
-                var csprojs = Directory.GetFiles(WorkingDir, "*.csproj", SearchOption.TopDirectoryOnly);
+                var csprojs = Directory.GetFiles(WorkingDirectory, "*.csproj", SearchOption.TopDirectoryOnly);
                 if (csprojs.Length == 0)
                 {
                     Error.Write("No csproj files were found in the current directory. Either move to a new directory or provide the project explicitly");

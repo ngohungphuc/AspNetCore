@@ -4,7 +4,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.DotNet.OpenApi.Tests;
-using Microsoft.DotNet.Tools;
+using Microsoft.Extensions.Tools.Internal;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -16,18 +16,15 @@ namespace Microsoft.Extensions.Internal
     {
         private readonly ITestOutputHelper _output;
         private readonly Process _process;
-        private readonly StringBuilder _stderrCapture;
-        private readonly StringBuilder _stdoutCapture;
+        private readonly StringBuilder _stderrCapture = new StringBuilder();
+        private readonly StringBuilder _stdoutCapture = new StringBuilder();
         private readonly object _pipeCaptureLock = new object();
-        private BlockingCollection<string> _stdoutLines;
+        private BlockingCollection<string> _stdoutLines = new BlockingCollection<string>();
         private TaskCompletionSource<int> _exited;
 
-        public ProcessEx(ITestOutputHelper output, Process proc)
+        private ProcessEx(ITestOutputHelper output, Process proc)
         {
             _output = output;
-            _stdoutCapture = new StringBuilder();
-            _stderrCapture = new StringBuilder();
-            _stdoutLines = new BlockingCollection<string>();
 
             _process = proc;
             proc.EnableRaisingEvents = true;
@@ -44,17 +41,6 @@ namespace Microsoft.Extensions.Internal
 
         public bool HasExited => _process.HasExited;
 
-        public string Error
-        {
-            get
-            {
-                lock (_pipeCaptureLock)
-                {
-                    return _stderrCapture.ToString();
-                }
-            }
-        }
-
         public string Output
         {
             get
@@ -66,11 +52,7 @@ namespace Microsoft.Extensions.Internal
             }
         }
 
-        public IEnumerable<string> OutputLinesAsEnumerable => _stdoutLines.GetConsumingEnumerable();
-
         public int ExitCode => _process.ExitCode;
-
-        public object Id => _process.Id;
 
         public static ProcessEx Run(ITestOutputHelper output, string workingDirectory, string command, string args = null, IDictionary<string, string> envVars = null)
         {
@@ -95,17 +77,6 @@ namespace Microsoft.Extensions.Internal
             var proc = Process.Start(startInfo);
 
             return new ProcessEx(output, proc);
-        }
-
-        public static async Task<ProcessEx> RunViaShellAsync(ITestOutputHelper output, string workingDirectory, string commandAndArgs)
-        {
-            var (shellExe, argsPrefix) = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? ("cmd", "/c")
-                : ("bash", "-c");
-
-            var result = Run(output, workingDirectory, shellExe, $"{argsPrefix} \"{commandAndArgs}\"");
-            await result.Exited;
-            return result;
         }
 
         private void OnErrorData(object sender, DataReceivedEventArgs e)
@@ -151,26 +122,6 @@ namespace Microsoft.Extensions.Internal
             _exited.TrySetResult(_process.ExitCode);
         }
 
-        internal string GetFormattedOutput()
-        {
-            if (!_process.HasExited)
-            {
-                throw new InvalidOperationException("Process has not finished running.");
-            }
-
-            return $"Process exited with code {_process.ExitCode}\nStdErr: {Error}\nStdOut: {Output}";
-        }
-
-        public void WaitForExit(bool assertSuccess)
-        {
-            Exited.Wait();
-
-            if (assertSuccess && _process.ExitCode != 0)
-            {
-                throw new Exception($"Process exited with code {_process.ExitCode}\nStdErr: {Error}\nStdOut: {Output}");
-            }
-        }
-
         public void Dispose()
         {
             if (_process != null && !_process.HasExited)
@@ -185,6 +136,11 @@ namespace Microsoft.Extensions.Internal
             _process.OutputDataReceived -= OnOutputData;
             _process.Exited -= OnProcessExited;
             _process.Dispose();
+
+            if(_stdoutLines != null)
+            {
+                _stdoutLines.Dispose();
+            }
         }
     }
 }

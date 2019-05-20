@@ -6,6 +6,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
+using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Tools.Internal;
 
 namespace Microsoft.DotNet.OpenApi.Commands
@@ -15,13 +16,17 @@ namespace Microsoft.DotNet.OpenApi.Commands
         private const string CommandName = "refresh";
 
         public RefreshCommand(Application parent) : base(parent, CommandName)
-        { }
+        {
+            _sourceFileArg = Argument(SourceProjectArgName, $"The openapi reference to refresh.");
+        }
+
+        internal readonly CommandArgument _sourceFileArg;
 
         protected override async Task<int> ExecuteCoreAsync()
         {
             var projectFile = ResolveProjectFile(ProjectFileOption);
 
-            var sourceFile = Ensure.NotNullOrEmpty(SourceFileArg.Value, SourceFileArgName);
+            var sourceFile = Ensure.NotNullOrEmpty(_sourceFileArg.Value, SourceProjectArgName);
 
             if (IsUrl(sourceFile))
             {
@@ -57,6 +62,12 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
             Error.Write("There was no openapi reference to refresh with the given url.");
             throw new ArgumentException();
+        }
+
+        protected override bool ValidateArguments()
+        {
+            Ensure.NotNullOrEmpty(_sourceFileArg.Value, SourceProjectArgName);
+            return true;
         }
     }
 }

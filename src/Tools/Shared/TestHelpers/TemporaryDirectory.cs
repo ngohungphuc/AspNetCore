@@ -4,10 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 
-namespace Microsoft.DotNet.Tools
+namespace Microsoft.Extensions.Tools.Internal
 {
     public class TemporaryDirectory : IDisposable
     {
@@ -49,9 +47,9 @@ namespace Microsoft.DotNet.Tools
             return project;
         }
 
-        public TemporaryDirectory WithEmptyFile(string name)
+        public TemporaryDirectory WithFile(string name, string contents = "")
         {
-            _files[name] = string.Empty;
+            _files[name] = contents;
             return this;
         }
 

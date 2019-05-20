@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
+using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Tools.Internal;
 
 namespace Microsoft.DotNet.OpenApi.Commands
@@ -15,13 +16,16 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
         public RemoveCommand(Application parent) : base(parent, CommandName)
         {
+            _sourceProjectArg = Argument(SourceProjectArgName, $"The openapi reference to remove. Must represent a reference which is already in this project", multipleValues: true);
         }
+
+        internal readonly CommandArgument _sourceProjectArg;
 
         protected override Task<int> ExecuteCoreAsync()
         {
             var projectFile = ResolveProjectFile(ProjectFileOption);
 
-            var sourceFile = Ensure.NotNullOrEmpty(SourceFileArg.Value, SourceFileArgName);
+            var sourceFile = Ensure.NotNullOrEmpty(_sourceProjectArg.Value, SourceProjectArgName);
 
             if (IsProjectFile(sourceFile))
             {
@@ -33,7 +37,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
                 if (!Path.IsPathRooted(sourceFile))
                 {
-                    sourceFile = Path.Combine(WorkingDir, sourceFile);
+                    sourceFile = Path.Combine(WorkingDirectory, sourceFile);
                 }
                 File.Delete(sourceFile);
             }
@@ -58,6 +62,12 @@ namespace Microsoft.DotNet.OpenApi.Commands
             }
 
             Out.Write("No openapi reference was found with the given source file");
+        }
+
+        protected override bool ValidateArguments()
+        {
+            Ensure.NotNullOrEmpty(_sourceProjectArg.Value, SourceProjectArgName);
+            return true;
         }
     }
 }

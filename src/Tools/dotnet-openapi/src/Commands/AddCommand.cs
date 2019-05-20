@@ -90,7 +90,6 @@ namespace Microsoft.DotNet.OpenApi.Commands
             FileInfo projectFile,
             string sourceFile,
             string className,
-            CodeGenerator codeGenerator,
             string sourceUrl = null)
         {
             var project = LoadProject(projectFile);
@@ -113,6 +112,15 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
                 project.AddElementWithAttributes(tagName, sourceFile, metadata);
             }
+            else
+            {
+                Out.Write($"A reference to '{sourceFile}' already exists in '{project.FullPath}'.");
+            }
+        }
+
+        protected override bool ValidateArguments()
+        {
+            return true;
         }
     }
 }

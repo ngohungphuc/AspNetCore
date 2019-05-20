@@ -23,8 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dotnet-openapi", "dotnet-op
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dotnet-openapi.Tests", "dotnet-openapi\test\dotnet-openapi.Tests.csproj", "{4922C862-D173-4E59-8F5E-23AEC2D59061}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_dependencies", "_dependencies", "{27DD7245-739B-48E6-84F0-5DBE24660FFC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

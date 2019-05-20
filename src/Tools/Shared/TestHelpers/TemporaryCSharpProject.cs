@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace Microsoft.DotNet.Tools
+namespace Microsoft.Extensions.Tools.Internal
 {
     public class TemporaryCSharpProject
     {
@@ -23,8 +23,8 @@ namespace Microsoft.DotNet.Tools
 
         private readonly string _filename;
         private readonly TemporaryDirectory _directory;
-        private List<string> _items = new List<string>();
-        private List<string> _properties = new List<string>();
+        private readonly List<string> _items = new List<string>();
+        private readonly List<string> _properties = new List<string>();
 
         public TemporaryCSharpProject(string name, TemporaryDirectory directory)
         {

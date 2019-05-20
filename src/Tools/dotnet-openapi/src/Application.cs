@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.OpenApi
         }
 
         public Application(
-            string workingDir,
+            string workingDirectory,
             Func<string, Task<string>> downloadProvider,
             TextWriter output = null,
             TextWriter error = null)
@@ -28,7 +28,7 @@ namespace Microsoft.DotNet.OpenApi
             Out = output ?? Out;
             Error = error ?? Error;
 
-            WorkingDir = workingDir;
+            WorkingDirectory = workingDirectory;
 
             Name = "openapi";
             FullName = "OpenApi reference management tool";
@@ -44,7 +44,7 @@ namespace Microsoft.DotNet.OpenApi
 
         public Func<string, Task<string>> DownloadProvider { get; }
 
-        public string WorkingDir { get; }
+        public string WorkingDirectory { get; }
 
         public new int Execute(params string[] args)
         {

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>Microsoft.DotNet.Open.Api.Tools.Tests</AssemblyName>
@@ -9,8 +9,8 @@
   <ItemGroup>
     <Compile Include="$(ToolSharedSourceRoot)TestHelpers\**\*.cs" />
     <Compile Include="$(SharedSourceRoot)test\SkipOnHelixAttribute.cs" />
-    <Compile Include="$(SharedSourceRoot)Process\*.cs" />
     <Content Include="TestContent\*" LinkBase="TestContent\" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="$(SharedSourceRoot)Process\ProcessExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,8 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.DotNet.OpenApi.Tests;
-using Microsoft.DotNet.Tools;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Tools.Internal;
 using Xunit;
 using Xunit.Abstractions;
 
