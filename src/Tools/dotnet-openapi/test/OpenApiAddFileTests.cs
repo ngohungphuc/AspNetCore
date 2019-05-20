@@ -20,7 +20,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenApi_Add_ReuseItemGroup()
         {
-            var project = CreateBasicProject(withSwagger: true);
+            var project = CreateBasicProject(withOpenApi: true);
 
             var app = GetApplication();
             var run = app.Execute(new[] { "add", "file", project.NSwagJsonFile });
@@ -28,7 +28,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
 
-            var secondRun = app.Execute(new[] { "add", "url", FakeSwaggerUrl });
+            var secondRun = app.Execute(new[] { "add", "url", FakeOpenApiUrl });
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, secondRun);
 
@@ -51,7 +51,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenApi_Add_FromJson()
         {
-            var project = CreateBasicProject(withSwagger: true);
+            var project = CreateBasicProject(withOpenApi: true);
             var nswagJsonFile = project.NSwagJsonFile;
 
             var app = GetApplication();
@@ -87,7 +87,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenApi_UseProjectOption()
         {
-            var project = CreateBasicProject(withSwagger: true);
+            var project = CreateBasicProject(withOpenApi: true);
             var nswagJsonFIle = project.NSwagJsonFile;
 
             var app = GetApplication();
@@ -110,7 +110,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenApi_Add_MultipleTimes_OnlyOneReference()
         {
-            var project = CreateBasicProject(withSwagger: true);
+            var project = CreateBasicProject(withOpenApi: true);
             var nswagJsonFile = project.NSwagJsonFile;
 
             var app = GetApplication();

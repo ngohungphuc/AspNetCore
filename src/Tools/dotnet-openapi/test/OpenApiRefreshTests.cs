@@ -18,10 +18,10 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
         [Fact]
         public async Task OpenApi_Refresh_Basic()
         {
-            CreateBasicProject(withSwagger: false);
+            CreateBasicProject(withOpenApi: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", "url", FakeSwaggerUrl });
+            var run = app.Execute(new[] { "add", "url", FakeOpenApiUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -37,7 +37,7 @@ namespace Microsoft.DotNet.OpenApi.Refresh.Tests
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
             app = GetApplication();
-            run = app.Execute(new[] { "refresh", FakeSwaggerUrl });
+            run = app.Execute(new[] { "refresh", FakeOpenApiUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);

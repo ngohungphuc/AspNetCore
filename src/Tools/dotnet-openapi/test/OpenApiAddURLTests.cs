@@ -16,10 +16,10 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenApi_Add_Url()
         {
-            var project = CreateBasicProject(withSwagger: false);
+            var project = CreateBasicProject(withOpenApi: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", "url", FakeSwaggerUrl });
+            var run = app.Execute(new[] { "add", "url", FakeOpenApiUrl });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -33,7 +33,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 var content = await reader.ReadToEndAsync();
                 Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
                 Assert.Contains(
-    $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeSwaggerUrl}"" />", content);
+    $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeOpenApiUrl}"" />", content);
             }
 
             Assert.True(File.Exists(expectedJsonName));
@@ -49,10 +49,10 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenApi_Add_Url_OutputFile()
         {
-            var project = CreateBasicProject(withSwagger: false);
+            var project = CreateBasicProject(withOpenApi: false);
 
             var app = GetApplication();
-            var run = app.Execute(new[] { "add", "url", FakeSwaggerUrl, "--output-file", Path.Combine("outputdir", "file.yaml") });
+            var run = app.Execute(new[] { "add", "url", FakeOpenApiUrl, "--output-file", Path.Combine("outputdir", "file.yaml") });
 
             Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
             Assert.Equal(0, run);
@@ -66,7 +66,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 var content = await reader.ReadToEndAsync();
                 Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
                 Assert.Contains(
-    $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeSwaggerUrl}"" />", content);
+    $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeOpenApiUrl}"" />", content);
             }
 
             Assert.True(File.Exists(expectedJsonName));

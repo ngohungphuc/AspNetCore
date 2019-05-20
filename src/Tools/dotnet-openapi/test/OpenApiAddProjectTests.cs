@@ -10,14 +10,14 @@ using Xunit.Abstractions;
 
 namespace Microsoft.DotNet.OpenApi.Add.Tests
 {
-    public class OpenApiAddTests : OpenApiTestBase
+    public class OpenApiAddProjectTests : OpenApiTestBase
     {
-        public OpenApiAddTests(ITestOutputHelper output) : base(output){}
+        public OpenApiAddProjectTests(ITestOutputHelper output) : base(output){}
 
         [Fact]
         public async Task OpenApi_Add_GlobbingOpenApi()
         {
-            var project = CreateBasicProject(withSwagger: true);
+            var project = CreateBasicProject(withOpenApi: true);
 
             using (var refProj1 = project.Project.Dir().SubDir("refProj1"))
             using (var refProj2 = project.Project.Dir().SubDir("refProj2"))
@@ -56,7 +56,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         [Fact]
         public async Task OpenAPi_Add_FromCsProj()
         {
-            var project = CreateBasicProject(withSwagger: false);
+            var project = CreateBasicProject(withOpenApi: false);
 
             using (var refProj = new TemporaryDirectory())
             {

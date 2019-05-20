@@ -17,7 +17,7 @@ namespace Microsoft.DotNet.OpenApi.Tests
         protected readonly ITestOutputHelper _outputHelper;
 
         protected const string Content = @"{""x-generator"": ""NSwag""}";
-        protected const string FakeSwaggerUrl = "https://contoso.com/swagger.json";
+        protected const string FakeOpenApiUrl = "https://contoso.com/openapi.json";
 
         public OpenApiTestBase(ITestOutputHelper output)
         {
@@ -25,15 +25,15 @@ namespace Microsoft.DotNet.OpenApi.Tests
             _outputHelper = output;
         }
 
-        public TemporaryNSwagProject CreateBasicProject(bool withSwagger)
+        public TemporaryNSwagProject CreateBasicProject(bool withOpenApi)
         {
-            var nswagJsonFile = "swagger.json";
+            var nswagJsonFile = "openapi.json";
             var project = _tempDir
                 .WithCSharpProject("testproj")
                 .WithTargetFrameworks("netcoreapp3.0");
             var tmp = project.Dir();
 
-            if (withSwagger)
+            if (withOpenApi)
             {
                 tmp = tmp.WithContentFile(nswagJsonFile);
             }

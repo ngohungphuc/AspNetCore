@@ -17,7 +17,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
         [Fact]
         public async Task OpenApi_Remove_File()
         {
-            var nswagJsonFile = "swagger.json";
+            var nswagJsonFile = "openapi.json";
             _tempDir
                 .WithCSharpProject("testproj")
                 .WithTargetFrameworks("netcoreapp3.0")
