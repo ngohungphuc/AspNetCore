@@ -18,6 +18,30 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
         public OpenApiAddFileTests(ITestOutputHelper output) : base(output) { }
 
         [Fact]
+        public void OpenApi_Empty_ShowsHelp()
+        {
+            var app = GetApplication();
+            var run = app.Execute(new string[] { });
+                                     
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            Assert.Contains("Usage: openapi ", _output.ToString());
+        }
+
+        [Fact]
+        public void OpenApi_Add_Empty_ShowsHelp()
+        {
+            var app = GetApplication();
+            var run = app.Execute(new string[] { "add" });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            Assert.Contains("Usage: openapi ", _output.ToString());
+        }
+
+        [Fact]
         public async Task OpenApi_Add_ReuseItemGroup()
         {
             var project = CreateBasicProject(withOpenApi: true);
@@ -83,9 +107,8 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             }
         }
 
-
         [Fact]
-        public async Task OpenApi_UseProjectOption()
+        public async Task OpenApi_Add_File_UseProjectOption()
         {
             var project = CreateBasicProject(withOpenApi: true);
             var nswagJsonFIle = project.NSwagJsonFile;

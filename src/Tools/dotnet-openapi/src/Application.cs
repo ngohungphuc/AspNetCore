@@ -37,6 +37,11 @@ namespace Microsoft.DotNet.OpenApi
 
             HelpOption("-?|-h|--help");
 
+            Invoke = () => {
+                ShowHelp();
+                return 0;
+            };
+
             Commands.Add(new AddCommand(this));
             Commands.Add(new RemoveCommand(this));
             Commands.Add(new RefreshCommand(this));

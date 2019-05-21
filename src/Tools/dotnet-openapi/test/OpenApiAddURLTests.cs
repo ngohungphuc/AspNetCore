@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.DotNet.OpenApi.Tests;
 using Xunit;
@@ -75,6 +76,36 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             {
                 var content = await reader.ReadToEndAsync();
                 Assert.Equal(Content, content);
+            }
+        }
+
+        [Fact]
+        public void OpenApi_Add_URL_MultipleTimes_OnlyOneReference()
+        {
+            var project = CreateBasicProject(withOpenApi: false);
+
+            var app = GetApplication();
+            var run = app.Execute(new[] { "add", "url", FakeOpenApiUrl });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            app = GetApplication();
+            run = app.Execute(new[] { "add", "url", "--output-file", "openapi.yaml", FakeOpenApiUrl });
+
+            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+            Assert.Equal(0, run);
+
+            // csproj contents
+            var csproj = new FileInfo(project.Project.Path);
+            using (var csprojStream = csproj.OpenRead())
+            using (var reader = new StreamReader(csprojStream))
+            {
+                var content = reader.ReadToEnd();
+                var escapedPkgRef = Regex.Escape("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"");
+                Assert.Single(Regex.Matches(content, escapedPkgRef));
+                var escapedApiRef = Regex.Escape($"SourceUrl=\"{FakeOpenApiUrl}\"");
+                Assert.Single(Regex.Matches(content, escapedApiRef));
             }
         }
     }

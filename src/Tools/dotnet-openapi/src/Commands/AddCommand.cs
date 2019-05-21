@@ -22,7 +22,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
         protected override Task<int> ExecuteCoreAsync()
         {
             ShowHelp();
-            return Task.FromResult(1);
+            return Task.FromResult(0);
         }
 
         protected override bool ValidateArguments()

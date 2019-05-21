@@ -54,6 +54,11 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
                 AddServiceReference(OpenApiReference, projectFilePath, destination, sourceFile);
             }
+            else
+            {
+                Error.Write($"{SourceProjectArgName} was not valid. Valid values are URLs");
+                return 1;
+            }
 
             return 0;
         }

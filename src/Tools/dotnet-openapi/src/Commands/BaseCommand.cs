@@ -124,6 +124,16 @@ namespace Microsoft.DotNet.OpenApi.Commands
             var items = project.GetItems(tagName);
             var item = items.SingleOrDefault(i => string.Equals(i.EvaluatedInclude, sourceFile));
 
+            if (sourceUrl != null)
+            {
+                var urlMatch = items.SingleOrDefault(i => string.Equals(i.GetMetadataValue(SourceUrlAttrName), sourceUrl));
+                if (urlMatch != null)
+                {
+                    Out.Write($"A reference to '{sourceUrl}' already exists in '{project.FullPath}'.");
+                    return;
+                }
+            }
+
             if (item == null)
             {
                 var metadata = new Dictionary<string, string>();
