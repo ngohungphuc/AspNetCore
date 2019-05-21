@@ -130,7 +130,7 @@ and are generated based on the last package release.
     <LatestPackageReference Include="Moq" Version="$(MoqPackageVersion)" />
     <LatestPackageReference Include="Newtonsoft.Json.Bson" Version="$(NewtonsoftJsonBsonPackageVersion)" />
     <LatestPackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonPackageVersion)" />
-    <LatestPackageReference Include="NSwag.MSBuild.CodeGeneration" Version="$(NSwagMSBuildCodeGenerationPackageVersion)" />
+    <LatestPackageReference Include="NSwag.ApiDescription.Client" Version="$(NSwagApiDescriptionClientPackageVersion)" />
     <LatestPackageReference Include="Selenium.Support" Version="$(SeleniumSupportPackageVersion)" />
     <LatestPackageReference Include="Selenium.WebDriver.ChromeDriver" Version="$(SeleniumWebDriverChromeDriverPackageVersion)" />
     <LatestPackageReference Include="Selenium.WebDriver.MicrosoftDriver" Version="$(SeleniumWebDriverMicrosoftDriverPackageVersion)" />

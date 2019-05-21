@@ -46,7 +46,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 using (var reader = new StreamReader(csprojStream))
                 {
                     var content = await reader.ReadToEndAsync();
-                    Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                    Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                     Assert.Contains($"<OpenApiProjectReference Include=\"{project1.Path}\"", content);
                     Assert.Contains($"<OpenApiProjectReference Include=\"{project2.Path}\"", content);
                 }
@@ -79,7 +79,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
                 using(var reader = new StreamReader(csprojStream))
                 {
                     var content = await reader.ReadToEndAsync();
-                    Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                    Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                     Assert.Contains($"<OpenApiProjectReference Include=\"{refProjFile}\"", content);
                 }
             }

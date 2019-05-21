@@ -38,7 +38,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.Contains($"<OpenApiReference Include=\"{project.NSwagJsonFile}\"", content);
             }
             var projXml = new XmlDocument();
@@ -66,7 +66,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFile}\"", content);
             }
 
@@ -102,7 +102,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
             }
         }
@@ -131,7 +131,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 var content = await reader.ReadToEndAsync();
-                var escapedPkgRef = Regex.Escape("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"");
+                var escapedPkgRef = Regex.Escape("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"");
                 Assert.Single(Regex.Matches(content, escapedPkgRef));
                 var escapedApiRef = Regex.Escape($"<OpenApiReference Include=\"{nswagJsonFile}\"");
                 Assert.Single(Regex.Matches(content, escapedApiRef));

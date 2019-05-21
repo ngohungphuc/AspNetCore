@@ -38,7 +38,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
             }
             else
             {
-                Error.Write($"'dotnet openapi refresh' must be given a url");
+                Error.Write($"'dotnet openapi refresh' must be given a URL");
                 throw new ArgumentException();
             }
 
@@ -60,7 +60,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
                 }
             }
 
-            Error.Write("There was no openapi reference to refresh with the given url.");
+            Error.Write("There was no openapi reference to refresh with the given URL.");
             throw new ArgumentException();
         }
 

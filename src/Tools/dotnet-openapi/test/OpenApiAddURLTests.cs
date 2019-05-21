@@ -31,7 +31,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.Contains(
     $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeOpenApiUrl}"" />", content);
             }
@@ -64,7 +64,7 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.Contains(
     $@"<OpenApiReference Include=""{expectedJsonName}"" SourceUrl=""{FakeOpenApiUrl}"" />", content);
             }

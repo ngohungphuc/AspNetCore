@@ -38,7 +38,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
             using (var reader = new StreamReader(csprojStream))
             {
                 var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFile}\"", content);
             }
 
@@ -55,7 +55,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
             {
                 var content = await reader.ReadToEndAsync();
                 // Don't remove the package reference, they might have taken other dependencies on it
-                Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                 Assert.DoesNotContain($"<OpenApiReference Include=\"{nswagJsonFile}\"", content);
             }
             Assert.False(File.Exists(Path.Combine(_tempDir.Root, nswagJsonFile)));
@@ -92,7 +92,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                 using (var reader = new StreamReader(csprojStream))
                 {
                     var content = await reader.ReadToEndAsync();
-                    Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                    Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                     Assert.Contains($"<OpenApiProjectReference Include=\"{refProjFile}\"", content);
                 }
 
@@ -107,7 +107,7 @@ namespace Microsoft.DotNet.OpenApi.Remove.Tests
                 using (var reader = new StreamReader(csprojStream))
                 {
                     var content = await reader.ReadToEndAsync();
-                    Assert.Contains("<PackageReference Include=\"NSwag.MSBuild.CodeGeneration\" Version=\"", content);
+                    Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
                     Assert.DoesNotContain($"<OpenApiProjectReference Include=\"{refProjFile}\"", content);
                 }
             }
