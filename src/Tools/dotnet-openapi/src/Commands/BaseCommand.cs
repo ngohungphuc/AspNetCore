@@ -191,7 +191,12 @@ namespace Microsoft.DotNet.OpenApi.Commands
                 };
 
                 var process = Process.Start(startInfo);
-                process.WaitForExit(20 * 1000);
+
+                if (!process.WaitForExit(5 * 1000))
+                {
+                    Error.Write($"Adding package `{packageId}` to `{projectFile.Directory}` took too long.");
+                    throw new ArgumentException();
+                }
 
                 if (process.ExitCode != 0)
                 {

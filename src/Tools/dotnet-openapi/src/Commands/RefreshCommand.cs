@@ -31,10 +31,8 @@ namespace Microsoft.DotNet.OpenApi.Commands
             if (IsUrl(sourceFile))
             {
                 var destination = FindReferenceFromUrl(projectFile, sourceFile);
-                using (var client = new HttpClient())
-                {
-                    await DownloadToFileAsync(sourceFile, destination, overwrite: true);
-                }
+
+                await DownloadToFileAsync(sourceFile, destination, overwrite: true);
             }
             else
             {
