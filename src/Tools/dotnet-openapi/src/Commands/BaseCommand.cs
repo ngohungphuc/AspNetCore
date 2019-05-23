@@ -22,7 +22,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
         public const string OpenApiReference = "OpenApiReference";
         public const string OpenApiProjectReference = "OpenApiProjectReference";
         protected const string SourceUrlAttrName = "SourceUrl";
-        
+
         public BaseCommand(CommandLineApplication parent, string name)
         {
             Parent = parent;
@@ -33,7 +33,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
             ProjectFileOption = Option("-p|--project", "The project to add a reference to", CommandOptionType.SingleValue);
 
             Help = HelpOption("-?|-h|--help");
-            if(Parent is Application)
+            if (Parent is Application)
             {
                 WorkingDirectory = ((Application)Parent).WorkingDirectory;
             }
@@ -46,7 +46,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
         }
 
         public CommandOption ProjectFileOption { get; }
-                 
+
         internal CommandOption Help { get; }
 
         protected abstract Task<int> ExecuteCoreAsync();
@@ -154,7 +154,7 @@ namespace Microsoft.DotNet.OpenApi.Commands
         internal async Task DownloadToFileAsync(string url, string destinationPath, bool overwrite)
         {
             Application application;
-            if(Parent is Application)
+            if (Parent is Application)
             {
                 application = (Application)Parent;
             }
@@ -192,10 +192,9 @@ namespace Microsoft.DotNet.OpenApi.Commands
 
                 var process = Process.Start(startInfo);
 
-                if (!process.WaitForExit(5 * 1000))
+                if (!process.WaitForExit(10*1000))
                 {
-                    Error.Write($"Adding package `{packageId}` to `{projectFile.Directory}` took too long.");
-                    throw new ArgumentException();
+                    throw new ArgumentException($"Adding package `{packageId}` to `{projectFile.Directory}` took too long.");
                 }
 
                 if (process.ExitCode != 0)
