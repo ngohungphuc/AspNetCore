@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Tools.Internal;
 using Xunit.Abstractions;
@@ -46,9 +48,19 @@ namespace Microsoft.DotNet.OpenApi.Tests
 
         internal Application GetApplication()
         {
+            AnnounceTestStart();
+
             return new Application(
                 _tempDir.Root,
                 DownloadMock, _output, _error);
+        }
+
+        private void AnnounceTestStart()
+        {
+            var type = _outputHelper.GetType();
+            var testMember = type.GetField("test", BindingFlags.Instance | BindingFlags.NonPublic);
+            var test = (ITest)testMember.GetValue(_outputHelper);
+            _outputHelper.WriteLine($"Starting test '{test.DisplayName}'");
         }
 
         private Task<Stream> DownloadMock(string url)
@@ -64,6 +76,7 @@ namespace Microsoft.DotNet.OpenApi.Tests
 
         public void Dispose()
         {
+            _outputHelper.WriteLine(_output.ToString());
             _tempDir.Dispose();
         }
     }

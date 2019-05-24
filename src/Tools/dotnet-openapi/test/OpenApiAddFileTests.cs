@@ -17,148 +17,148 @@ namespace Microsoft.DotNet.OpenApi.Add.Tests
     {
         public OpenApiAddFileTests(ITestOutputHelper output) : base(output) { }
 
-        [Fact]
-        public void OpenApi_Empty_ShowsHelp()
-        {
-            var app = GetApplication();
-            var run = app.Execute(new string[] { });
-                                     
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        // [Fact]
+        // public void OpenApi_Empty_ShowsHelp()
+        // {
+        //     var app = GetApplication();
+        //     var run = app.Execute(new string[] { });
 
-            Assert.Contains("Usage: openapi ", _output.ToString());
-        }
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
 
-        [Fact]
-        public void OpenApi_Add_Empty_ShowsHelp()
-        {
-            var app = GetApplication();
-            var run = app.Execute(new string[] { "add" });
+        //     Assert.Contains("Usage: openapi ", _output.ToString());
+        // }
 
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        // [Fact]
+        // public void OpenApi_Add_Empty_ShowsHelp()
+        // {
+        //     var app = GetApplication();
+        //     var run = app.Execute(new string[] { "add" });
 
-            Assert.Contains("Usage: openapi ", _output.ToString());
-        }
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
 
-        [Fact]
-        public async Task OpenApi_Add_ReuseItemGroup()
-        {
-            var project = CreateBasicProject(withOpenApi: true);
+        //     Assert.Contains("Usage: openapi ", _output.ToString());
+        // }
 
-            var app = GetApplication();
-            var run = app.Execute(new[] { "add", "file", project.NSwagJsonFile });
+        // [Fact]
+        // public async Task OpenApi_Add_ReuseItemGroup()
+        // {
+        //     var project = CreateBasicProject(withOpenApi: true);
 
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        //     var app = GetApplication();
+        //     var run = app.Execute(new[] { "add", "file", project.NSwagJsonFile });
 
-            var secondRun = app.Execute(new[] { "add", "url", FakeOpenApiUrl });
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, secondRun);
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
 
-            var csproj = new FileInfo(project.Project.Path);
-            string content;
-            using (var csprojStream = csproj.OpenRead())
-            using (var reader = new StreamReader(csprojStream))
-            {
-                content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
-                Assert.Contains($"<OpenApiReference Include=\"{project.NSwagJsonFile}\"", content);
-            }
-            var projXml = new XmlDocument();
-            projXml.Load(csproj.FullName);
+        //     var secondRun = app.Execute(new[] { "add", "url", FakeOpenApiUrl });
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, secondRun);
 
-            var openApiRefs = projXml.GetElementsByTagName(Commands.BaseCommand.OpenApiReference);
-            Assert.Same(openApiRefs[0].ParentNode, openApiRefs[1].ParentNode);
-        }
+        //     var csproj = new FileInfo(project.Project.Path);
+        //     string content;
+        //     using (var csprojStream = csproj.OpenRead())
+        //     using (var reader = new StreamReader(csprojStream))
+        //     {
+        //         content = await reader.ReadToEndAsync();
+        //         Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
+        //         Assert.Contains($"<OpenApiReference Include=\"{project.NSwagJsonFile}\"", content);
+        //     }
+        //     var projXml = new XmlDocument();
+        //     projXml.Load(csproj.FullName);
 
-        [Fact]
-        public async Task OpenApi_Add_FromJson()
-        {
-            var project = CreateBasicProject(withOpenApi: true);
-            var nswagJsonFile = project.NSwagJsonFile;
+        //     var openApiRefs = projXml.GetElementsByTagName(Commands.BaseCommand.OpenApiReference);
+        //     Assert.Same(openApiRefs[0].ParentNode, openApiRefs[1].ParentNode);
+        // }
 
-            var app = GetApplication();
-            var run = app.Execute(new[] { "add", "file", nswagJsonFile });
+        // [Fact]
+        // public async Task OpenApi_Add_FromJson()
+        // {
+        //     var project = CreateBasicProject(withOpenApi: true);
+        //     var nswagJsonFile = project.NSwagJsonFile;
 
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        //     var app = GetApplication();
+        //     var run = app.Execute(new[] { "add", "file", nswagJsonFile });
 
-            // csproj contents
-            var csproj = new FileInfo(project.Project.Path);
-            using (var csprojStream = csproj.OpenRead())
-            using (var reader = new StreamReader(csprojStream))
-            {
-                var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
-                Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFile}\"", content);
-            }
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
 
-            // Build project and make sure it compiles
-            var buildProc = ProcessEx.Run(_outputHelper, _tempDir.Root, "dotnet", "build");
-            await buildProc.Exited;
-            Assert.True(buildProc.ExitCode == 0, $"Build failed: {buildProc.Output}");
+        //     // csproj contents
+        //     var csproj = new FileInfo(project.Project.Path);
+        //     using (var csprojStream = csproj.OpenRead())
+        //     using (var reader = new StreamReader(csprojStream))
+        //     {
+        //         var content = await reader.ReadToEndAsync();
+        //         Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
+        //         Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFile}\"", content);
+        //     }
 
-            // Run project and make sure it doesn't crash
-            using (var runProc = ProcessEx.Run(_outputHelper, _tempDir.Root, "dotnet", "run"))
-            {
-                Thread.Sleep(100);
-                Assert.False(runProc.HasExited, $"Run failed with: {runProc.Output}");
-            }
-        }
+        //     // Build project and make sure it compiles
+        //     var buildProc = ProcessEx.Run(_outputHelper, _tempDir.Root, "dotnet", "build");
+        //     await buildProc.Exited;
+        //     Assert.True(buildProc.ExitCode == 0, $"Build failed: {buildProc.Output}");
 
-        [Fact]
-        public async Task OpenApi_Add_File_UseProjectOption()
-        {
-            var project = CreateBasicProject(withOpenApi: true);
-            var nswagJsonFIle = project.NSwagJsonFile;
+        //     // Run project and make sure it doesn't crash
+        //     using (var runProc = ProcessEx.Run(_outputHelper, _tempDir.Root, "dotnet", "run"))
+        //     {
+        //         Thread.Sleep(100);
+        //         Assert.False(runProc.HasExited, $"Run failed with: {runProc.Output}");
+        //     }
+        // }
 
-            var app = GetApplication();
-            var run = app.Execute(new[] { "add", "file", "--project", project.Project.Path, nswagJsonFIle });
+        // [Fact]
+        // public async Task OpenApi_Add_File_UseProjectOption()
+        // {
+        //     var project = CreateBasicProject(withOpenApi: true);
+        //     var nswagJsonFIle = project.NSwagJsonFile;
 
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        //     var app = GetApplication();
+        //     var run = app.Execute(new[] { "add", "file", "--project", project.Project.Path, nswagJsonFIle });
 
-            // csproj contents
-            var csproj = new FileInfo(project.Project.Path);
-            using (var csprojStream = csproj.OpenRead())
-            using (var reader = new StreamReader(csprojStream))
-            {
-                var content = await reader.ReadToEndAsync();
-                Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
-                Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
-            }
-        }
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
 
-        [Fact]
-        public async Task OpenApi_Add_MultipleTimes_OnlyOneReference()
-        {
-            var project = CreateBasicProject(withOpenApi: true);
-            var nswagJsonFile = project.NSwagJsonFile;
+        //     // csproj contents
+        //     var csproj = new FileInfo(project.Project.Path);
+        //     using (var csprojStream = csproj.OpenRead())
+        //     using (var reader = new StreamReader(csprojStream))
+        //     {
+        //         var content = await reader.ReadToEndAsync();
+        //         Assert.Contains("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"", content);
+        //         Assert.Contains($"<OpenApiReference Include=\"{nswagJsonFIle}\"", content);
+        //     }
+        // }
 
-            var app = GetApplication();
-            var run = app.Execute(new[] { "add", "file", nswagJsonFile });
+        // [Fact]
+        // public async Task OpenApi_Add_MultipleTimes_OnlyOneReference()
+        // {
+        //     var project = CreateBasicProject(withOpenApi: true);
+        //     var nswagJsonFile = project.NSwagJsonFile;
 
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        //     var app = GetApplication();
+        //     var run = app.Execute(new[] { "add", "file", nswagJsonFile });
 
-            app = GetApplication();
-            run = app.Execute(new[] { "add", "file", nswagJsonFile });
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
 
-            Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
-            Assert.Equal(0, run);
+        //     app = GetApplication();
+        //     run = app.Execute(new[] { "add", "file", nswagJsonFile });
 
-            // csproj contents
-            var csproj = new FileInfo(project.Project.Path);
-            using (var csprojStream = csproj.OpenRead())
-            using (var reader = new StreamReader(csprojStream))
-            {
-                var content = await reader.ReadToEndAsync();
-                var escapedPkgRef = Regex.Escape("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"");
-                Assert.Single(Regex.Matches(content, escapedPkgRef));
-                var escapedApiRef = Regex.Escape($"<OpenApiReference Include=\"{nswagJsonFile}\"");
-                Assert.Single(Regex.Matches(content, escapedApiRef));
-            }
-        }
+        //     Assert.True(string.IsNullOrEmpty(_error.ToString()), $"Threw error: {_error.ToString()}");
+        //     Assert.Equal(0, run);
+
+        //     // csproj contents
+        //     var csproj = new FileInfo(project.Project.Path);
+        //     using (var csprojStream = csproj.OpenRead())
+        //     using (var reader = new StreamReader(csprojStream))
+        //     {
+        //         var content = await reader.ReadToEndAsync();
+        //         var escapedPkgRef = Regex.Escape("<PackageReference Include=\"NSwag.ApiDescription.Client\" Version=\"");
+        //         Assert.Single(Regex.Matches(content, escapedPkgRef));
+        //         var escapedApiRef = Regex.Escape($"<OpenApiReference Include=\"{nswagJsonFile}\"");
+        //         Assert.Single(Regex.Matches(content, escapedApiRef));
+        //     }
+        // }
     }
 }
