@@ -31,10 +31,6 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets
             SocketTransportOptions options,
             ISocketsTrace trace)
         {
-            Debug.Assert(endpoint != null);
-            Debug.Assert(endpoint is IPEndPoint);
-            Debug.Assert(trace != null);
-
             EndPoint = endpoint;
             _trace = trace;
             _options = options;
@@ -66,9 +62,16 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets
                 throw new InvalidOperationException(SocketsStrings.TransportAlreadyBound);
             }
 
-            // TODO: Add support for UnixDomainSocket
+            Socket listenSocket;
 
-            var listenSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            if (EndPoint is UnixDomainSocketEndPoint)
+            {
+                listenSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Unspecified);
+            }
+            else
+            {
+                listenSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            }
 
             // Kestrel expects IPv6Any to bind to both IPv6 and IPv4
             if (EndPoint is IPEndPoint ip && ip.Address == IPAddress.IPv6Any)
@@ -99,7 +102,12 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets
                 try
                 {
                     var acceptSocket = await _listenSocket.AcceptAsync();
-                    acceptSocket.NoDelay = _options.NoDelay;
+
+                    // Only apply no delay to Tcp based endpoints
+                    if (acceptSocket.LocalEndPoint is IPEndPoint)
+                    {
+                        acceptSocket.NoDelay = _options.NoDelay;
+                    }
 
                     var connection = new SocketConnection(acceptSocket, _memoryPool, _schedulers[_schedulerIndex], _trace, _options.MaxReadBufferSize, _options.MaxWriteBufferSize);
 
