@@ -11,7 +11,7 @@ namespace Microsoft.Extensions.Tools.Internal
     public class TemporaryCSharpProject
     {
         private const string Template =
- @"<Project Sdk=""Microsoft.NET.Sdk.Web"">
+ @"<Project Sdk=""{2}"">
   <PropertyGroup>
     {0}
     <OutputType>Exe</OutputType>
@@ -26,15 +26,18 @@ namespace Microsoft.Extensions.Tools.Internal
         private readonly List<string> _items = new List<string>();
         private readonly List<string> _properties = new List<string>();
 
-        public TemporaryCSharpProject(string name, TemporaryDirectory directory)
+        public TemporaryCSharpProject(string name, TemporaryDirectory directory, string sdk)
         {
             Name = name;
             _filename = name + ".csproj";
             _directory = directory;
+            Sdk = sdk;
         }
 
         public string Name { get; }
         public string Path => System.IO.Path.Combine(_directory.Root, _filename);
+
+        public string Sdk { get; }
 
         public TemporaryCSharpProject WithTargetFrameworks(params string[] tfms)
         {
@@ -95,7 +98,7 @@ namespace Microsoft.Extensions.Tools.Internal
 
         public void Create()
         {
-            _directory.CreateFile(_filename, string.Format(Template, string.Join("\r\n", _properties), string.Join("\r\n", _items)));
+            _directory.CreateFile(_filename, string.Format(Template, string.Join("\r\n", _properties), string.Join("\r\n", _items), Sdk));
         }
 
         public class ItemSpec
