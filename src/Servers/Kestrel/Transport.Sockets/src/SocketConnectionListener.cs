@@ -64,14 +64,10 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets
 
             Socket listenSocket;
 
-            if (EndPoint is UnixDomainSocketEndPoint)
-            {
-                listenSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Unspecified);
-            }
-            else
-            {
-                listenSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            }
+            // Unix domain sockets are unspecified
+            var protocolType = EndPoint is UnixDomainSocketEndPoint ? ProtocolType.Unspecified : ProtocolType.Tcp;
+
+            listenSocket = new Socket(EndPoint.AddressFamily, SocketType.Stream, protocolType);
 
             // Kestrel expects IPv6Any to bind to both IPv6 and IPv4
             if (EndPoint is IPEndPoint ip && ip.Address == IPAddress.IPv6Any)
